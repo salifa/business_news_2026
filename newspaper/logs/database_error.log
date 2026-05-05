@@ -1,0 +1,14 @@
+[2026-04-21 21:50:53] SQLSTATE[HY000] [1045] Access denied for user 'root'@'localhost' (using password: NO)
+[2026-04-21 21:52:13] SQLSTATE[HY000] [1045] Access denied for user 'root'@'localhost' (using password: NO)
+[2026-04-24 09:51:23] SQLSTATE[01000]: Warning: 1265 Data truncated for column 'ad_type' at row 1
+[2026-04-24 09:52:05] SQLSTATE[01000]: Warning: 1265 Data truncated for column 'ad_type' at row 1
+[2026-04-24 09:52:28] SQLSTATE[01000]: Warning: 1265 Data truncated for column 'ad_type' at row 1
+[2026-04-24 09:57:49] SQLSTATE[01000]: Warning: 1265 Data truncated for column 'ad_type' at row 1
+[2026-04-24 09:58:04] SQLSTATE[01000]: Warning: 1265 Data truncated for column 'ad_type' at row 1
+[2026-04-24 09:58:16] SQLSTATE[01000]: Warning: 1265 Data truncated for column 'ad_type' at row 1
+[2026-04-29 16:19:29] SQLSTATE[22007]: Invalid datetime format: 1366 Incorrect integer value: 'admin@vnn.mac.in.th' for column `vnnsbiz`.`payment_transactions`.`approved_by` at row 1
+[2026-04-29 16:19:56] SQLSTATE[22007]: Invalid datetime format: 1366 Incorrect integer value: 'admin@vnn.mac.in.th' for column `vnnsbiz`.`payment_transactions`.`approved_by` at row 1
+[2026-04-29 16:20:03] SQLSTATE[22007]: Invalid datetime format: 1366 Incorrect integer value: 'admin@vnn.mac.in.th' for column `vnnsbiz`.`payment_transactions`.`approved_by` at row 1
+[2026-04-29 16:20:11] SQLSTATE[22007]: Invalid datetime format: 1366 Incorrect integer value: 'admin@vnn.mac.in.th' for column `vnnsbiz`.`payment_transactions`.`approved_by` at row 1
+[2026-04-30 11:19:54] SQLSTATE[HY093]: Invalid parameter number
+[2026-04-30 15:18:42] SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '2026-04-30' for key 'unique_issue_date'

@@ -1,0 +1,273 @@
+<?php
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../classes/User.php';
+
+$user = new User();
+$error = '';
+$success = '';
+
+// Handle registration form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
+        $error = 'Invalid request. Please try again.';
+    } else {
+        $email = sanitize($_POST['email']);
+        $password = $_POST['password'];
+        $confirmPassword = $_POST['confirm_password'];
+        $fullname = sanitize($_POST['fullname']);
+        
+        // Validate passwords match
+        if ($password !== $confirmPassword) {
+            $error = 'รหัสผ่านไม่ตรงกัน';
+        } else {
+            $result = $user->register($email, $password, $fullname);
+            
+            if ($result['success']) {
+                $success = $result['message'] . ' กรุณาเข้าสู่ระบบ';
+                
+                // Auto login
+                $loginResult = $user->login($email, $password);
+                if ($loginResult['success']) {
+                    redirect(BASE_URL . 'user/dashboard.php');
+                }
+            } else {
+                $error = $result['message'];
+            }
+        }
+    }
+}
+
+// If already logged in, redirect to dashboard
+if (isLoggedIn()) {
+    redirect(BASE_URL . 'user/dashboard.php');
+}
+?>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ลงทะเบียน - <?php echo NEWSPAPER_NAME; ?></title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Sarabun', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .register-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .register-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .register-body {
+            padding: 40px 30px;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .btn-primary-custom:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .password-strength {
+            height: 5px;
+            margin-top: 5px;
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+<div class="register-card">
+    <div class="register-header">
+        <h1 class="h3 mb-2">
+            <i class="fas fa-user-plus"></i>
+            ลงทะเบียน
+        </h1>
+        <p class="mb-0"><?php echo NEWSPAPER_NAME; ?></p>
+    </div>
+    
+    <div class="register-body">
+        <?php if ($error): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle"></i> <?php echo $error; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+        
+        <?php if ($success): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle"></i> <?php echo $success; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+        
+        <form method="POST" action="" id="registerForm">
+            <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
+            
+            <div class="mb-3">
+                <label for="fullname" class="form-label">ชื่อ-นามสกุล <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input type="text" class="form-control" id="fullname" name="fullname" required
+                           placeholder="ชื่อเต็มของคุณ" value="<?php echo isset($_POST['fullname']) ? escape($_POST['fullname']) : ''; ?>">
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">อีเมล <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                    <input type="email" class="form-control" id="email" name="email" required
+                           placeholder="your@email.com" value="<?php echo isset($_POST['email']) ? escape($_POST['email']) : ''; ?>">
+                </div>
+                <div class="form-text">ใช้สำหรับเข้าสู่ระบบและรับข้อมูลข่าวสาร</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">รหัสผ่าน <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" class="form-control" id="password" name="password" required
+                           placeholder="อย่างน้อย 6 ตัวอักษร" minlength="6">
+                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="password-strength bg-secondary" id="passwordStrength"></div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="confirm_password" class="form-label">ยืนยันรหัสผ่าน <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required
+                           placeholder="กรอกรหัสผ่านอีกครั้ง" minlength="6">
+                </div>
+            </div>
+            
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="agree" required>
+                <label class="form-check-label" for="agree">
+                    ฉันยอมรับ <a href="#" target="_blank">ข้อกำหนดและเงื่อนไข</a>
+                </label>
+            </div>
+            
+            <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-primary-custom btn-lg">
+                    <i class="fas fa-user-plus"></i> ลงทะเบียน
+                </button>
+            </div>
+        </form>
+        
+        <hr class="my-4">
+        
+        <div class="text-center">
+            <p class="mb-0">มีบัญชีอยู่แล้ว? <a href="login.php" class="fw-bold text-decoration-none">เข้าสู่ระบบ</a></p>
+        </div>
+        
+        <div class="text-center mt-3">
+            <a href="<?php echo BASE_URL; ?>" class="text-muted text-decoration-none">
+                <i class="fas fa-home"></i> กลับหน้าแรก
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Toggle password visibility
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const password = document.getElementById('password');
+    const icon = this.querySelector('i');
+    
+    if (password.type === 'password') {
+        password.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        password.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+});
+
+// Password strength indicator
+document.getElementById('password').addEventListener('input', function() {
+    const password = this.value;
+    const strengthBar = document.getElementById('passwordStrength');
+    
+    let strength = 0;
+    if (password.length >= 6) strength++;
+    if (password.length >= 10) strength++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+    if (/[^a-zA-Z0-9]/.test(password)) strength++;
+    
+    strengthBar.classList.remove('bg-danger', 'bg-warning', 'bg-success', 'bg-secondary');
+    
+    if (password.length === 0) {
+        strengthBar.classList.add('bg-secondary');
+        strengthBar.style.width = '0%';
+    } else if (strength <= 2) {
+        strengthBar.classList.add('bg-danger');
+        strengthBar.style.width = '33%';
+    } else if (strength <= 3) {
+        strengthBar.classList.add('bg-warning');
+        strengthBar.style.width = '66%';
+    } else {
+        strengthBar.classList.add('bg-success');
+        strengthBar.style.width = '100%';
+    }
+});
+
+// Form validation
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    
+    if (password !== confirmPassword) {
+        e.preventDefault();
+        alert('รหัสผ่านไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง');
+        return false;
+    }
+});
+</script>
+</body>
+</html>

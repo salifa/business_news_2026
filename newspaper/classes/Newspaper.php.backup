@@ -1,0 +1,407 @@
+<?php
+/**
+ * Newspaper Class
+ * Handles newspaper generation and management
+ */
+
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/database.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+
+class Newspaper {
+    private $db;
+    private $pdf;
+    
+    public function __construct() {
+        $this->db = Database::getInstance();
+    }
+    
+    /**
+     * Generate newspaper PDF for a specific date
+     */
+    public function generateNewspaper($date, $adminId) {
+        // Get approved advertisements for the date
+        $ads = $this->getApprovedAdvertisements($date);
+        
+        if (empty($ads)) {
+            return ['success' => false, 'message' => 'ไม่มีประกาศที่อนุมัติสำหรับวันที่นี้'];
+        }
+        
+        // Create newspaper record
+        $newspaperId = $this->createNewspaperRecord($date, $adminId);
+        
+        if (!$newspaperId) {
+            return ['success' => false, 'message' => 'ไม่สามารถสร้างรายการหนังสือพิมพ์ได้'];
+        }
+        
+        // Generate PDF
+        $pdfFile = $this->createPDF($date, $ads, $newspaperId);
+        
+        if (!$pdfFile) {
+            return ['success' => false, 'message' => 'ไม่สามารถสร้างไฟล์ PDF ได้'];
+        }
+        
+        // Update newspaper record with PDF file info
+        $pageCount = $this->calculatePageCount(count($ads));
+        $this->updateNewspaperRecord($newspaperId, $pdfFile, $pageCount, count($ads));
+        
+        // Update advertisement records
+        $this->linkAdvertisementsToNewspaper($ads, $newspaperId, $date);
+        
+        logActivity("Newspaper generated for {$date} by admin {$adminId}");
+        
+        return [
+            'success' => true,
+            'message' => 'สร้างหนังสือพิมพ์สำเร็จ',
+            'newspaper_id' => $newspaperId,
+            'pdf_file' => $pdfFile,
+            'page_count' => $pageCount,
+            'ad_count' => count($ads)
+        ];
+    }
+    
+    /**
+     * Get approved advertisements
+     */
+    private function getApprovedAdvertisements($date) {
+        $sql = "SELECT p.*, opu.fullname 
+                FROM placard p
+                LEFT JOIN online_placard_users opu ON p.email = opu.email
+                WHERE p.status = 'approved'
+                AND p.id NOT IN (
+                    SELECT placard_id FROM newspaper_advertisements 
+                    WHERE placard_id IS NOT NULL
+                )
+                ORDER BY p.approved_at ASC";
+        
+        return $this->db->query($sql);
+    }
+    
+    /**
+     * Create newspaper record
+     */
+    private function createNewspaperRecord($date, $adminId) {
+        return $this->db->insert('newspapers', [
+            'newspaper_date' => $date,
+            'generated_by' => $adminId,
+            'status' => 'draft'
+        ]);
+    }
+    
+    /**
+     * Calculate page count based on number of ads
+     * Page 1: Header + 2 ads
+     * Page 2+: 4 ads per page
+     */
+    private function calculatePageCount($adCount) {
+        if ($adCount <= 2) {
+            return 1;
+        }
+        
+        // First page has 2 ads, remaining pages have 4 ads each
+        $remainingAds = $adCount - 2;
+        $additionalPages = ceil($remainingAds / 4);
+        
+        return 1 + $additionalPages;
+    }
+    
+    /**
+     * Create PDF file
+     */
+    private function createPDF($date, $ads, $newspaperId) {
+        // Create new PDF document
+        $this->pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+        
+        // Set document information
+        $this->pdf->SetCreator('VNN Newspaper System');
+        $this->pdf->SetAuthor('VNN');
+        $this->pdf->SetTitle('หนังสือพิมพ์ประกาศ - ' . formatThaiDate($date));
+        
+        // Set default font (using dejavusans which supports Thai)
+        $this->pdf->SetFont('garuda', '', 16);
+        
+        // Remove default header/footer
+        $this->pdf->setPrintHeader(false);
+        $this->pdf->setPrintFooter(false);
+        
+        // Set margins
+        $this->pdf->SetMargins(10, 10, 10);
+        $this->pdf->SetAutoPageBreak(true, 10);
+        
+        // Generate pages
+        $this->generateFirstPage($date, $ads);
+        $this->generateAdvertisementPages($ads);
+        
+        // Create directory if not exists
+        $pdfDir = __DIR__ . '/../public/newspapers/pdf/';
+        if (!is_dir($pdfDir)) {
+            mkdir($pdfDir, 0777, true);
+        }
+        
+        // Save PDF
+        $filename = 'newspaper-' . $date . '-' . $newspaperId . '.pdf';
+        $filepath = $pdfDir . $filename;
+        $this->pdf->Output($filepath, 'F');
+        
+        return $filename;
+    }
+    
+    /**
+     * Generate first page with header and ads
+     */
+    private function generateFirstPage($date, $ads) {
+        $this->pdf->AddPage();
+        
+        // Header section
+        $this->drawHeader($date);
+        
+        // Add first 2 advertisements
+        $firstPageAds = array_slice($ads, 0, 2);
+        foreach ($firstPageAds as $index => $ad) {
+            $this->drawAdvertisement($ad, $index);
+        }
+    }
+    
+    /**
+     * Generate advertisement pages (4 ads per page)
+     */
+    private function generateAdvertisementPages($ads) {
+        // Skip first 2 ads (already on page 1)
+        $remainingAds = array_slice($ads, 2);
+        
+        if (empty($remainingAds)) {
+            return;
+        }
+        
+        // Group ads by 4 per page
+        $adsPerPage = 4;
+        $pages = array_chunk($remainingAds, $adsPerPage);
+        
+        foreach ($pages as $pageAds) {
+            $this->pdf->AddPage();
+            $this->drawAdvertisementGrid($pageAds);
+        }
+    }
+    
+    /**
+     * Draw newspaper header
+     */
+    private function drawHeader($date) {
+        // Title
+        $this->pdf->SetFont('garuda', 'B', 28);
+        $this->pdf->SetTextColor(0, 0, 128);
+        $this->pdf->Cell(0, 15, 'หนังสือพิมพ์ประกาศทั่วไป', 0, 1, 'C');
+        
+        // Date
+        $this->pdf->SetFont('garuda', '', 18);
+        $this->pdf->SetTextColor(0, 0, 0);
+        $thaiDate = formatThaiDate($date);
+        $this->pdf->Cell(0, 10, 'วันที่ ' . $thaiDate, 0, 1, 'C');
+        
+        // Line separator
+        $this->pdf->Line(10, $this->pdf->GetY(), 200, $this->pdf->GetY());
+        $this->pdf->Ln(5);
+    }
+    
+    /**
+     * Draw single advertisement
+     */
+    private function drawAdvertisement($ad, $position = 0) {
+        $startY = $this->pdf->GetY();
+        
+        // Advertisement box
+        $this->pdf->Rect($this->pdf->GetX(), $startY, 190, 80);
+        
+        // Title
+        $this->pdf->SetFont('garuda', 'B', 20);
+        $this->pdf->SetXY(15, $startY + 5);
+        $this->pdf->Cell(180, 10, $ad['title'] ?: $ad['subject'], 0, 1);
+        
+        // Content
+        $this->pdf->SetFont('garuda', '', 16);
+        $this->pdf->SetXY(15, $startY + 15);
+        $this->pdf->MultiCell(180, 6, strip_tags($ad['content'] ?: '-'), 0, 'L');
+        
+        // Company name if available
+        if (!empty($ad['companyname'])) {
+            $this->pdf->SetFont('garuda', 'I', 14);
+            $this->pdf->SetXY(15, $startY + 70);
+            $this->pdf->Cell(180, 6, 'โดย: ' . $ad['companyname'], 0, 1);
+        }
+        
+        $this->pdf->SetY($startY + 85);
+    }
+    
+    /**
+     * Draw advertisement grid (4 ads per page)
+     */
+    private function drawAdvertisementGrid($ads) {
+        $positions = [
+            ['x' => 10, 'y' => 10],   // Top left
+            ['x' => 105, 'y' => 10],  // Top right
+            ['x' => 10, 'y' => 148],  // Bottom left
+            ['x' => 105, 'y' => 148]  // Bottom right
+        ];
+        
+        foreach ($ads as $index => $ad) {
+            if ($index >= 4) break;
+            
+            $pos = $positions[$index];
+            $this->drawAdvertisementInGrid($ad, $pos['x'], $pos['y']);
+        }
+    }
+    
+    /**
+     * Draw advertisement in grid position
+     */
+    private function drawAdvertisementInGrid($ad, $x, $y) {
+        $width = 95;
+        $height = 135;
+        
+        // Box
+        $this->pdf->Rect($x, $y, $width, $height);
+        
+        // Title
+        $this->pdf->SetFont('garuda', 'B', 18);
+        $this->pdf->SetXY($x + 3, $y + 3);
+        $this->pdf->MultiCell($width - 6, 6, $ad['title'] ?: $ad['subject'], 0, 'L');
+        
+        // Content
+        $this->pdf->SetFont('garuda', '', 14);
+        $this->pdf->SetXY($x + 3, $y + 15);
+        $content = strip_tags($ad['content'] ?: '-');
+        $content = mb_substr($content, 0, 300); // Limit length
+        $this->pdf->MultiCell($width - 6, 5, $content, 0, 'L');
+        
+        // Company
+        if (!empty($ad['companyname'])) {
+            $this->pdf->SetFont('garuda', 'I', 12);
+            $this->pdf->SetXY($x + 3, $y + $height - 8);
+            $this->pdf->Cell($width - 6, 5, 'โดย: ' . $ad['companyname'], 0, 0, 'L');
+        }
+    }
+    
+    /**
+     * Update newspaper record
+     */
+    private function updateNewspaperRecord($id, $pdfFile, $pageCount, $adCount) {
+        return $this->db->update('newspapers',
+            [
+                'pdf_file' => $pdfFile,
+                'page_count' => $pageCount,
+                'advertisement_count' => $adCount,
+                'generated_at' => date('Y-m-d H:i:s'),
+                'status' => 'published'
+            ],
+            'id = :id',
+            [':id' => $id]
+        );
+    }
+    
+    /**
+     * Link advertisements to newspaper
+     */
+    private function linkAdvertisementsToNewspaper($ads, $newspaperId, $date) {
+        foreach ($ads as $index => $ad) {
+            // Calculate page number
+            if ($index < 2) {
+                $pageNumber = 1;
+            } else {
+                $pageNumber = 2 + floor(($index - 2) / 4);
+            }
+            
+            $this->db->insert('newspaper_advertisements', [
+                'placard_id' => $ad['id'],
+                'newspaper_id' => $newspaperId,
+                'newspaper_date' => $date,
+                'page_number' => $pageNumber,
+                'status' => 'published'
+            ]);
+            
+            // Update placard status
+            $this->db->update('placard',
+                ['status' => 'published'],
+                'id = :id',
+                [':id' => $ad['id']]
+            );
+        }
+    }
+    
+    /**
+     * Get all newspapers
+     */
+    public function getAllNewspapers($page = 1, $limit = 20) {
+        $offset = ($page - 1) * $limit;
+        
+        $sql = "SELECT * FROM newspapers 
+                ORDER BY newspaper_date DESC 
+                LIMIT :limit OFFSET :offset";
+        
+        $this->db->prepare($sql);
+        $this->db->bind(':limit', $limit, PDO::PARAM_INT);
+        $this->db->bind(':offset', $offset, PDO::PARAM_INT);
+        
+        return $this->db->fetchAll();
+    }
+    
+    /**
+     * Get newspaper by ID
+     */
+    public function getById($id) {
+        $sql = "SELECT * FROM newspapers WHERE id = :id LIMIT 1";
+        return $this->db->queryOne($sql, [':id' => $id]);
+    }
+    
+    /**
+     * Get count of pending advertisements
+     */
+    public function getApprovedAdCount() {
+        $sql = "SELECT COUNT(*) as count 
+                FROM placard 
+                WHERE status = 'approved'
+                AND id NOT IN (
+                    SELECT placard_id FROM newspaper_advertisements 
+                    WHERE placard_id IS NOT NULL
+                )";
+        
+        $result = $this->db->queryOne($sql);
+        return $result['count'];
+    }
+    
+    /**
+     * Delete newspaper
+     */
+    public function delete($id) {
+        $newspaper = $this->getById($id);
+        
+        if (!$newspaper) {
+            return ['success' => false, 'message' => 'ไม่พบหนังสือพิมพ์'];
+        }
+        
+        // Delete PDF file
+        if ($newspaper['pdf_file']) {
+            $filepath = __DIR__ . '/../public/newspapers/pdf/' . $newspaper['pdf_file'];
+            if (file_exists($filepath)) {
+                unlink($filepath);
+            }
+        }
+        
+        // Update advertisements status back to approved
+        $this->db->query(
+            "UPDATE placard SET status = 'approved' 
+             WHERE id IN (
+                 SELECT placard_id FROM newspaper_advertisements 
+                 WHERE newspaper_id = :id
+             )",
+            [':id' => $id]
+        );
+        
+        // Delete newspaper advertisements links
+        $this->db->delete('newspaper_advertisements', 'newspaper_id = :id', [':id' => $id]);
+        
+        // Delete newspaper record
+        $this->db->delete('newspapers', 'id = :id', [':id' => $id]);
+        
+        return ['success' => true, 'message' => 'ลบหนังสือพิมพ์สำเร็จ'];
+    }
+}

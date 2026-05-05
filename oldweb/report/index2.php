@@ -1,0 +1,99 @@
+<?php
+require_once 'stimulsoft/helper.php';
+require_once 'thaiutils/datethai.php';
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>under test 2</title>
+
+	<!-- Office2013 style -->
+	<link href="css/stimulsoft.viewer.office2013.whiteteal.css" rel="stylesheet">
+
+	<!-- Stimusloft Reports.JS -->
+	<script src="scripts/stimulsoft.reports.js" type="text/javascript"></script>
+	<script src="scripts/stimulsoft.reports.maps.js" type="text/javascript"></script>
+	
+	<!-- Stimusloft Dashboards.JS -->
+	<script src="scripts/stimulsoft.dashboards.js" type="text/javascript"></script>
+	<script src="scripts/stimulsoft.viewer.js" type="text/javascript"></script>
+	
+	<?php 
+		$options = StiHelper::createOptions();
+		$options->handler = "handler.php";
+		$options->timeout = 30;
+		StiHelper::initialize($options);
+	?>
+	<script type="text/javascript">
+		Stimulsoft.Base.StiLicense.loadFromFile("stimulsoft/license.php");
+		
+		var options = new Stimulsoft.Viewer.StiViewerOptions();
+		options.appearance.fullScreenMode = true;
+		options.toolbar.showSendEmailButton = false;
+		options.toolbar.showSaveButton = false;
+		options.toolbar.showAboutButton = false;
+		options.toolbar.showOpenButton = false;
+		
+		var viewer = new Stimulsoft.Viewer.StiViewer(options, "StiViewer", false);
+		
+		// Process SQL data source
+		viewer.onBeginProcessData = function (event, callback) {
+			<?php StiHelper::createHandler(); ?>
+		}
+		
+		// Manage export settings on the server side
+		viewer.onBeginExportReport = function (args) {
+			<?php //StiHelper::createHandler(); ?>
+			//args.fileName = "MyReportName";
+		}
+		
+		// Process exported report file on the server side
+		/*viewer.onEndExportReport = function (event) {
+			event.preventDefault = true; // Prevent client default event handler (save the exported report as a file)
+			<?php StiHelper::createHandler(); ?>
+		}*/
+		
+		// Send exported report to Email
+		viewer.onEmailReport = function (event) {
+			<?php StiHelper::createHandler(); ?>
+		}
+		
+		// Load and show report
+		var report = new Stimulsoft.Report.StiReport();
+		report.loadFile("mrt/de2.mrt");
+		
+			function getUrlVars() {
+				var vars = {};
+				var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi,
+					function (m, key, value) {
+						vars[key] = value;
+					});
+				return vars;
+			}
+
+
+
+		var vars = getUrlVars();
+
+		report.dictionary.variables.list.forEach(function(item, i, arr) {
+			if (typeof vars[item.name] != "undefined") 
+				item.valueObject = vars[item.name];
+		});
+
+		viewer.report = report;
+		viewer.renderHtml("viewerContent");
+
+        // smith try to save pdf
+        //report.exportDocument(StiExportFormat.pdf,"stimulsoft/file.pdf");
+        report.renderedPages;
+        report.exportDocument(StiExportFormat.pdf,"/website/vnn.mac.in.th/report/MyReport.pdf");
+
+	</script>
+
+	</head>
+<body>
+	<div id="viewerContent"></div>
+</body>
+</html>

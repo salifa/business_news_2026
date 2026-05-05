@@ -1,0 +1,299 @@
+<?php
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../classes/Credit.php';
+require_once __DIR__ . '/../classes/Advertisement.php';
+
+requireAdmin();
+
+$credit = new Credit();
+$ad = new Advertisement();
+
+// Get statistics
+$pendingPayments = $credit->countPendingPayments();
+$pendingAds = $ad->countPendingAdvertisements();
+$adStats = $ad->getStatistics();
+?>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แอดมิน - <?php echo NEWSPAPER_NAME; ?></title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Sarabun', sans-serif;
+        }
+        
+        body {
+            background: #f8f9fa;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .sidebar {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar .nav-link {
+            color: #333;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="<?php echo BASE_URL; ?>admin/">
+            <i class="fas fa-shield-alt"></i>
+            <?php echo NEWSPAPER_NAME; ?> - Admin
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo BASE_URL; ?>user/dashboard.php">
+                        <i class="fas fa-user"></i> ไปยังหน้าผู้ใช้
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <span class="navbar-text text-white">
+                        <i class="fas fa-user-shield"></i>
+                        <?php echo escape($_SESSION['user_fullname']); ?>
+                    </span>
+                </li>
+                <li class="nav-item ms-3">
+                    <a class="btn btn-outline-light btn-sm" href="<?php echo BASE_URL; ?>public/logout.php">
+                        <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2">
+            <div class="sidebar">
+                <nav class="nav flex-column">
+                    <a class="nav-link active" href="dashboard.php">
+                        <i class="fas fa-home"></i> แดชบอร์ด
+                    </a>
+                    <a class="nav-link" href="approve-payments.php">
+                        <i class="fas fa-money-check-alt"></i> อนุมัติการชำระเงิน
+                        <?php if ($pendingPayments > 0): ?>
+                            <span class="badge bg-danger"><?php echo $pendingPayments; ?></span>
+                        <?php endif; ?>
+                    </a>
+                    <a class="nav-link" href="manage-advertisements.php">
+                        <i class="fas fa-newspaper"></i> จัดการประกาศ
+                        <?php if ($pendingAds > 0): ?>
+                            <span class="badge bg-warning"><?php echo $pendingAds; ?></span>
+                        <?php endif; ?>
+                    </a>
+                    <a class="nav-link" href="manage-users.php">
+                        <i class="fas fa-users"></i> จัดการผู้ใช้
+                    </a>
+                    <a class="nav-link" href="<?php echo BASE_URL; ?>public/download.php" target="_blank">
+                        <i class="fas fa-download"></i> ดูหนังสือพิมพ์ทั้งหมด
+                    </a>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-10">
+            <!-- Flash Messages -->
+            <?php foreach (getFlash() as $flash): ?>
+                <div class="alert alert-<?php echo $flash['type']; ?> alert-dismissible fade show" role="alert">
+                    <?php echo $flash['message']; ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endforeach; ?>
+            
+            <h2 class="mb-4">
+                <i class="fas fa-tachometer-alt text-primary"></i> แดชบอร์ดแอดมิน
+            </h2>
+            
+            <!-- Statistics -->
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon text-danger">
+                            <i class="fas fa-money-check-alt"></i>
+                        </div>
+                        <h3><?php echo number_format($pendingPayments); ?></h3>
+                        <p class="text-muted mb-0">รอตรวจสอบการชำระเงิน</p>
+                        <a href="approve-payments.php" class="btn btn-sm btn-outline-danger mt-2">
+                            ตรวจสอบ
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon text-warning">
+                            <i class="fas fa-newspaper"></i>
+                        </div>
+                        <h3><?php echo number_format($pendingAds); ?></h3>
+                        <p class="text-muted mb-0">รอตรวจสอบประกาศ</p>
+                        <a href="manage-advertisements.php" class="btn btn-sm btn-outline-warning mt-2">
+                            ตรวจสอบ
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon text-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h3><?php echo number_format($adStats['approved']); ?></h3>
+                        <p class="text-muted mb-0">ประกาศที่อนุมัติแล้ว</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon text-info">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3><?php echo number_format($adStats['total']); ?></h3>
+                        <p class="text-muted mb-0">ประกาศทั้งหมด</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="content-card mt-4">
+                <h4 class="mb-3">
+                    <i class="fas fa-bolt text-warning"></i> การดำเนินการด่วน
+                </h4>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <a href="approve-payments.php" class="btn btn-lg btn-danger w-100">
+                            <i class="fas fa-money-check-alt"></i> อนุมัติการชำระเงิน (<?php echo $pendingPayments; ?>)
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="manage-advertisements.php" class="btn btn-lg btn-warning w-100">
+                            <i class="fas fa-newspaper"></i> ตรวจสอบประกาศ (<?php echo $pendingAds; ?>)
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Info -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="content-card">
+                        <h5 class="mb-3">
+                            <i class="fas fa-info-circle text-primary"></i> ข้อมูลระบบ
+                        </h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>เวอร์ชัน:</strong></td>
+                                <td>1.0</td>
+                            </tr>
+                            <tr>
+                                <td><strong>ฐานข้อมูล:</strong></td>
+                                <td><?php echo DB_NAME; ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PHP Version:</strong></td>
+                                <td><?php echo phpversion(); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Server:</strong></td>
+                                <td><?php echo $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown'; ?></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="content-card">
+                        <h5 class="mb-3">
+                            <i class="fas fa-chart-bar text-success"></i> สถิติประกาศ
+                        </h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>รอตรวจสอบ:</strong></td>
+                                <td><span class="badge bg-warning"><?php echo number_format($adStats['pending']); ?></span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>อนุมัติแล้ว:</strong></td>
+                                <td><span class="badge bg-success"><?php echo number_format($adStats['approved']); ?></span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>ปฏิเสธ:</strong></td>
+                                <td><span class="badge bg-danger"><?php echo number_format($adStats['rejected']); ?></span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>ทั้งหมด:</strong></td>
+                                <td><span class="badge bg-primary"><?php echo number_format($adStats['total']); ?></span></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

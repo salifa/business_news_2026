@@ -1,0 +1,483 @@
+<?php
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../classes/Advertisement.php';
+require_once __DIR__ . '/../classes/Credit.php';
+
+requireLogin();
+
+$ad = new Advertisement();
+$credit = new Credit();
+$userEmail = getCurrentUserEmail();
+$error = '';
+$success = '';
+
+// Get user credit balance
+$userCredits = $credit->getUserBalance($userEmail);
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
+        $error = 'Invalid request. Please try again.';
+    } else {
+        $adType = sanitize($_POST['ad_type']);
+        $title = sanitize($_POST['title']);
+        $content = sanitize($_POST['content']);
+        
+        $data = [
+            'user_email' => $userEmail,
+            'ad_type' => $adType,
+            'title' => $title,
+            'content' => $content
+        ];
+        
+        // Handle file upload
+        if (isset($_FILES['ad_file']) && $_FILES['ad_file']['error'] === UPLOAD_ERR_OK) {
+            $allowedTypes = array_merge(ALLOWED_IMAGE_TYPES, ALLOWED_PDF_TYPES);
+            $upload = uploadFile($_FILES['ad_file'], $allowedTypes);
+            
+            if (!$upload['success']) {
+                $error = $upload['error'];
+            } else {
+                $data['file_path'] = $upload['filename'];
+            }
+        }
+        
+        if (!$error) {
+            $result = $ad->create($data);
+            
+            if ($result['success']) {
+                setFlash('success', $result['message'] . " เครดิตคงเหลือ: {$result['credits_remaining']}");
+                redirect(BASE_URL . 'user/my-advertisements.php');
+            } else {
+                $error = $result['message'];
+            }
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ลงประกาศใหม่ - <?php echo NEWSPAPER_NAME; ?></title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Sarabun', sans-serif;
+        }
+        
+        body {
+            background: #f5f5f5;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .content-form-ads {
+            padding: 40px;
+            background: #fefefe;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0,0,0,0.08);
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        
+        .form-ads-header {
+            color: #555;
+            text-align: center;
+            margin-bottom: 35px;
+            padding-bottom: 20px;
+            border-bottom: solid 2px #eee;
+        }
+        
+        .form-ads-header h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .form-ads-header .credit-info {
+            color: #667eea;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        .content-form-ads .require {
+            color: #F3565D;
+        }
+        
+        .content-form-ads .control-label {
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        
+        .content-form-ads .form-control {
+            border: 1px solid #ddd;
+            padding: 12px;
+            font-size: 15px;
+            border-radius: 4px;
+            transition: border-color 0.3s;
+        }
+        
+        .content-form-ads .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+        }
+        
+        .content-form-ads .form-check {
+            padding: 12px 15px;
+            margin-bottom: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .content-form-ads .form-check:hover {
+            border-color: #667eea;
+            background-color: #f8f9ff;
+        }
+        
+        .content-form-ads .form-check-input:checked ~ .form-check-label {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .alert-box {
+            padding: 15px 20px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            border-left: 4px solid;
+        }
+        
+        .alert-box.info {
+            background-color: #e7f3ff;
+            border-color: #2196F3;
+            color: #1976D2;
+        }
+        
+        .alert-box.warning {
+            background-color: #fff8e1;
+            border-color: #FFC107;
+            color: #F57C00;
+        }
+        
+        .alert-box ul {
+            margin: 5px 0 0 0;
+            padding-left: 20px;
+        }
+        
+        .preview-box {
+            border: 2px dashed #dee2e6;
+            border-radius: 5px;
+            padding: 30px;
+            text-align: center;
+            min-height: 200px;
+            background: #fafafa;
+            margin-top: 15px;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 5px;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 14px 40px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .btn-submit:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-cancel {
+            background: #fff;
+            border: 2px solid #ddd;
+            color: #666;
+            padding: 14px 40px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .btn-cancel:hover {
+            border-color: #999;
+            color: #333;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="<?php echo BASE_URL; ?>">
+            <i class="fas fa-newspaper"></i>
+            <?php echo NEWSPAPER_NAME; ?>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="dashboard.php">
+                        <i class="fas fa-home"></i> แดชบอร์ด
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="create-advertisement.php">
+                        <i class="fas fa-plus-circle"></i> ลงประกาศ
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="my-advertisements.php">
+                        <i class="fas fa-newspaper"></i> ประกาศของฉัน
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="buy-credits.php">
+                        <i class="fas fa-shopping-cart"></i> ซื้อเครดิต
+                    </a>
+                </li>
+                <?php if (isAdmin()): ?>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo BASE_URL; ?>admin/dashboard.php">
+                        <i class="fas fa-shield-alt"></i> แอดมิน
+                    </a>
+                </li>
+                <?php endif; ?>
+                <li class="nav-item ms-3">
+                    <span class="navbar-text text-white me-2">
+                        <i class="fas fa-coins"></i> <strong><?php echo number_format($userCredits); ?></strong>
+                    </span>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-outline-light btn-sm" href="<?php echo BASE_URL; ?>public/logout.php">
+                        <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12 page-header">
+            <h1>ลงโฆษณา</h1>
+            <hr>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2 col-sm-10 col-sm-offset-1">
+            <?php if ($error): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> <?php echo $error; ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($userCredits < 1): ?>
+                <div class="content-form-ads">
+                    <div class="alert-box warning">
+                        <h5 style="margin-bottom: 10px;">
+                            <i class="fas fa-exclamation-triangle"></i> เครดิตไม่เพียงพอ
+                        </h5>
+                        <p style="margin-bottom: 10px;">
+                            คุณต้องมีเครดิตอย่างน้อย 1 หน่วยเพื่อลงประกาศ
+                        </p>
+                        <a href="buy-credits.php" class="btn btn-submit" style="display: inline-block; text-decoration: none;">
+                            <i class="fas fa-shopping-cart"></i> ซื้อเครดิตเลย
+                        </a>
+                    </div>
+                </div>
+            <?php else: ?>
+            
+            <div class="content-form-ads">
+                <form method="POST" enctype="multipart/form-data" id="adForm">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
+                    
+                    <div class="form-ads-header">
+                        <h2>ลงประกาศใหม่</h2>
+                        <div class="credit-info">
+                            <i class="fas fa-coins"></i> เครดิตคงเหลือ: <?php echo number_format($userCredits); ?> หน่วย
+                        </div>
+                    </div>
+                    
+                    <!-- Ad Type Selection -->
+                    <div class="form-group">
+                        <label class="control-label">ประเภทประกาศ <span class="require">*</span></label>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="ad_type" id="regular" 
+                                   value="regular" checked required>
+                            <label class="form-check-label" for="regular">
+                                <strong>ประกาศทั่วไป</strong> - 1 เครดิต
+                                <br><small class="text-muted">ขนาดมาตรฐาน เหมาะสำหรับประกาศทั่วไป</small>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="ad_type" id="fullpage" 
+                                   value="fullpage" required>
+                            <label class="form-check-label" for="fullpage">
+                                <strong>ประกาศเต็มหน้า</strong> - 2 เครดิต
+                                <br><small class="text-muted">เต็มหน้ากระดาษ เหมาะสำหรับประกาศสำคัญ</small>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Title -->
+                    <div class="form-group">
+                        <label class="control-label" for="title">หัวข้อประกาศ <span class="require">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               placeholder="เช่น ประกาศชำระบัญชี, ประกาศเลิกบริษัท, เชิญประชุมผู้ถือหุ้น" required 
+                               value="<?php echo isset($_POST['title']) ? escape($_POST['title']) : ''; ?>">
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="form-group">
+                        <label class="control-label" for="content">เนื้อหาประกาศ</label>
+                        <textarea class="form-control" id="content" name="content" rows="10"
+                                  placeholder="กรอกเนื้อหาประกาศที่ต้องการลง (หรืออัปโหลดไฟล์)"><?php echo isset($_POST['content']) ? escape($_POST['content']) : ''; ?></textarea>
+                        <small class="text-muted">ไม่จำเป็นหากมีการอัปโหลดไฟล์</small>
+                    </div>
+                    
+                    <!-- File Upload -->
+                    <div class="form-group">
+                        <label class="control-label" for="ad_file">อัปโหลดไฟล์ (ถ้ามี)</label>
+                        <input type="file" class="form-control" id="ad_file" name="ad_file" 
+                               accept=".pdf,.jpg,.jpeg,.png,.gif">
+                        <small class="text-muted">รองรับ: PDF, JPG, PNG, GIF (ไม่เกิน 10 MB)</small>
+                    </div>
+                    
+                    <!-- Preview Box -->
+                    <div class="preview-box" id="previewBox" style="display: none;">
+                        <h6 style="margin-bottom: 15px; color: #666;">ตัวอย่างไฟล์</h6>
+                        <div id="previewContent"></div>
+                    </div>
+                    
+                    <!-- Info Box -->
+                    <div class="alert-box info">
+                        <h6 style="margin-bottom: 8px;">
+                            <i class="fas fa-info-circle"></i> คำแนะนำการลงประกาศ
+                        </h6>
+                        <ul style="font-size: 14px;">
+                            <li>อัปโหลดไฟล์ PDF หรือรูปภาพ หรือกรอกข้อความในฟอร์ม</li>
+                            <li>ขนาดไฟล์ไม่เกิน 10 MB</li>
+                            <li>ประกาศจะผ่านการตรวจสอบโดยผู้ดูแลก่อนเผยแพร่</li>
+                            <li>เครดิตจะถูกหักทันทีเมื่อส่งประกาศ</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Buttons -->
+                    <div class="form-group text-center" style="margin-top: 30px;">
+                        <a href="dashboard.php" class="btn btn-cancel">
+                            <i class="fas fa-times"></i> ยกเลิก
+                        </a>
+                        <button type="submit" class="btn btn-submit">
+                            <i class="fas fa-paper-plane"></i> ส่งประกาศ
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// File preview
+document.getElementById('ad_file').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const previewBox = document.getElementById('previewBox');
+    const previewContent = document.getElementById('previewContent');
+    
+    if (file) {
+        previewBox.style.display = 'block';
+        
+        if (file.type === 'application/pdf') {
+            previewContent.innerHTML = `
+                <i class="fas fa-file-pdf text-danger" style="font-size: 4rem;"></i>
+                <p class="mt-3 mb-0" style="color: #333; font-weight: 500;">${file.name}</p>
+                <p class="text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+            `;
+        } else if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewContent.innerHTML = `
+                    <img src="${e.target.result}" class="preview-image" alt="Preview">
+                    <p class="mt-3 mb-0" style="color: #333; font-weight: 500;">${file.name}</p>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+    } else {
+        previewBox.style.display = 'none';
+    }
+});
+
+// Form validation
+document.getElementById('adForm').addEventListener('submit', function(e) {
+    const content = document.getElementById('content').value.trim();
+    const file = document.getElementById('ad_file').files[0];
+    
+    if (!content && !file) {
+        e.preventDefault();
+        alert('กรุณากรอกเนื้อหาประกาศหรืออัปโหลดไฟล์');
+        return false;
+    }
+    
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังส่งประกาศ...';
+});
+
+// Enhanced form check interactions
+document.querySelectorAll('.form-check').forEach(check => {
+    check.addEventListener('click', function() {
+        const radio = this.querySelector('input[type="radio"]');
+        if (radio) {
+            radio.checked = true;
+        }
+    });
+});
+</script>
+</body>
+</html>

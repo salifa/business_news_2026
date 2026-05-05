@@ -1,0 +1,51 @@
+[2026-04-29 15:37:35] [info] [guest] PDF generation failed for 2026-04-29: [Errno 13] Permission denied: '/var/www/html/vnn.mac.in.th/newspaper/generated_pdfs/temp_placard_2026-04-29.pdf'
+[2026-04-29 15:37:44] [info] [guest] PDF generation failed for 2026-04-29: [Errno 13] Permission denied: '/var/www/html/vnn.mac.in.th/newspaper/generated_pdfs/temp_placard_2026-04-29.pdf'
+[2026-04-29 15:43:37] [info] [guest] Placard issue generated for 2026-04-29: 1
+[2026-04-29 15:44:40] [info] [guest] User logged out: 
+[2026-04-29 15:44:48] [info] [salifa@gmail.com] User logged in: salifa@gmail.com
+[2026-04-29 15:45:44] [info] [salifa@gmail.com] Payment created: 70.00 baht for 1 credits by salifa@gmail.com
+[2026-04-29 15:54:55] [info] [salifa@gmail.com] Payment created: 70.00 baht for 1 credits by salifa@gmail.com
+[2026-04-29 15:57:31] [info] [salifa@gmail.com] Payment slip uploaded for payment ID: 3
+[2026-04-29 15:58:57] [info] [guest] User logged out: salifa@gmail.com
+[2026-04-29 15:59:04] [info] [salifa@gmail.com] User logged in: salifa@gmail.com
+[2026-04-29 16:02:53] [info] [guest] User logged out: salifa@gmail.com
+[2026-04-29 16:03:06] [info] [salifa@gmail.com] User logged in: salifa@gmail.com
+[2026-04-29 16:03:24] [info] [salifa@gmail.com] Payment created: 300.00 baht for 5 credits by salifa@gmail.com
+[2026-04-29 16:04:54] [info] [guest] User logged out: salifa@gmail.com
+[2026-04-29 16:05:00] [info] [salifa@gmail.com] User logged in: salifa@gmail.com
+[2026-04-29 16:05:26] [info] [salifa@gmail.com] Payment created: 300.00 baht for 5 credits by salifa@gmail.com
+[2026-04-29 16:05:45] [info] [salifa@gmail.com] Payment slip uploaded for payment ID: 5
+[2026-04-29 16:07:31] [info] [salifa@gmail.com] User logged in: salifa@gmail.com
+[2026-04-29 16:19:29] [info] [admin@vnn.mac.in.th] Payment 5 approved by admin admin@vnn.mac.in.th
+[2026-04-29 16:19:56] [info] [admin@vnn.mac.in.th] Payment 5 approved by admin admin@vnn.mac.in.th
+[2026-04-29 16:20:03] [info] [admin@vnn.mac.in.th] Payment 4 approved by admin admin@vnn.mac.in.th
+[2026-04-29 16:20:11] [info] [admin@vnn.mac.in.th] Payment 4 approved by admin admin@vnn.mac.in.th
+[2026-04-29 16:25:25] [info] [admin@vnn.mac.in.th] Payment 5 approved by admin 1
+[2026-04-29 16:25:41] [info] [admin@vnn.mac.in.th] Payment 4 approved by admin 1
+[2026-04-29 16:26:04] [info] [admin@vnn.mac.in.th] Payment 3 rejected by admin 1
+[2026-04-29 16:26:07] [info] [admin@vnn.mac.in.th] Payment 3 rejected by admin 1
+[2026-04-29 16:26:11] [info] [admin@vnn.mac.in.th] Payment 3 rejected by admin 1
+[2026-04-29 16:26:14] [info] [admin@vnn.mac.in.th] Payment 3 rejected by admin 1
+[2026-04-29 16:26:18] [info] [admin@vnn.mac.in.th] Payment 3 rejected by admin 1
+[2026-04-29 16:26:21] [info] [admin@vnn.mac.in.th] Payment 3 rejected by admin 1
+[2026-04-29 16:35:07] [info] [admin@vnn.mac.in.th] Payment created: 70.00 baht for 1 credits by admin@vnn.mac.in.th
+[2026-04-29 16:35:31] [info] [admin@vnn.mac.in.th] Payment slip uploaded for payment ID: 6
+[2026-04-29 16:35:41] [info] [admin@vnn.mac.in.th] Payment 6 approved by admin 1
+[2026-04-29 16:37:15] [info] [admin@vnn.mac.in.th] Credits deducted: 1 from admin@vnn.mac.in.th
+[2026-04-29 16:37:15] [info] [admin@vnn.mac.in.th] Advertisement created: ID 164 by admin@vnn.mac.in.th
+[2026-04-29 16:37:24] [info] [admin@vnn.mac.in.th] Advertisement 164 approved by admin admin@vnn.mac.in.th
+[2026-04-29 16:38:08] [info] [admin@vnn.mac.in.th] Placard issue generated for 2026-05-01: 2
+[2026-04-29 16:58:12] [info] [salifa@gmail.com] User logged in: salifa@gmail.com
+[2026-04-29 16:58:19] [info] [salifa@gmail.com] Payment created: 300.00 baht for 5 credits by salifa@gmail.com
+[2026-04-29 17:08:21] [info] [guest] User logged out: salifa@gmail.com
+[2026-04-29 17:08:27] [info] [salifa@gmail.com] User logged in: salifa@gmail.com
+[2026-04-29 20:35:33] [info] [salifa@gmail.com] User logged in: salifa@gmail.com
+[2026-04-29 20:35:37] [info] [salifa@gmail.com] User logged in: salifa@gmail.com
+[2026-04-29 20:37:04] [info] [salifa@gmail.com] Credits deducted: 2 from salifa@gmail.com
+[2026-04-29 20:37:04] [info] [salifa@gmail.com] Advertisement created and auto-approved: ID 165 by salifa@gmail.com
+[2026-04-29 20:37:04] [info] [salifa@gmail.com] Placard issue generated for 2026-04-29: 3
+[2026-04-29 20:37:04] [info] [salifa@gmail.com] Auto-generated PDF for date 2026-04-29 after creating ad 165
+[2026-04-29 20:45:37] [info] [salifa@gmail.com] Payment created: 300.00 baht for 5 credits by salifa@gmail.com
+[2026-04-29 20:48:03] [info] [salifa@gmail.com] Payment created: 300.00 baht for 5 credits by salifa@gmail.com
+[2026-04-29 20:53:19] [info] [salifa@gmail.com] User logged in: salifa@gmail.com
+[2026-04-29 20:53:39] [info] [salifa@gmail.com] Payment created: 500.00 baht for 10 credits by salifa@gmail.com

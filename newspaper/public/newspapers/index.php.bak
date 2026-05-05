@@ -1,0 +1,420 @@
+<?php
+require_once __DIR__ . '/../../includes/config.php';
+require_once __DIR__ . '/../../includes/database.php';
+
+// Get filter and pagination
+$year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
+$month = isset($_GET['month']) ? (int)$_GET['month'] : null;
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$perPage = 24; // Show 24 newspapers per page
+$offset = ($page - 1) * $perPage;
+
+// Get database instance
+$db = Database::getInstance();
+
+// Build query
+$whereClause = "WHERE status = 'published'";
+$params = [];
+
+if ($year) {
+    $whereClause .= " AND YEAR(newspaper_date) = :year";
+    $params[':year'] = $year;
+}
+
+if ($month) {
+    $whereClause .= " AND MONTH(newspaper_date) = :month";
+    $params[':month'] = $month;
+}
+
+// Get total count
+$countSql = "SELECT COUNT(*) as total FROM newspapers {$whereClause}";
+$countResult = $db->queryOne($countSql, $params);
+$totalNewspapers = $countResult['total'] ?? 0;
+$totalPages = ceil($totalNewspapers / $perPage);
+
+// Get newspapers
+$sql = "SELECT * FROM newspapers 
+        {$whereClause} 
+        ORDER BY newspaper_date DESC 
+        LIMIT {$perPage} OFFSET {$offset}";
+$newspapers = $db->query($sql, $params);
+
+// Get available years
+$yearsSql = "SELECT DISTINCT YEAR(newspaper_date) as year 
+             FROM newspapers 
+             WHERE status = 'published' 
+             ORDER BY year DESC";
+$availableYears = $db->query($yearsSql);
+
+$thaiMonths = [
+    1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน',
+    5 => 'พฤษภาคม', 6 => 'มิถุนายน', 7 => 'กรกฎาคม', 8 => 'สิงหาคม',
+    9 => 'กันยายน', 10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม'
+];
+?>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หนังสือพิมพ์ - <?php echo NEWSPAPER_NAME; ?></title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Sarabun', sans-serif;
+        }
+        
+        body {
+            background: #f8f9fa;
+        }
+        
+        .navbar-custom {
+            background: #ffffff;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            padding: 15px 0;
+        }
+        
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0 40px;
+            margin-bottom: 40px;
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .filter-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        
+        .newspaper-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            height: 100%;
+            transition: all 0.3s;
+        }
+        
+        .newspaper-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        
+        .newspaper-icon {
+            font-size: 4rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .newspaper-date {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .newspaper-info {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+        
+        .btn-download {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        
+        .pagination {
+            margin-top: 40px;
+        }
+        
+        .pagination .page-link {
+            color: #667eea;
+            border: 1px solid #e9ecef;
+            margin: 0 3px;
+            border-radius: 5px;
+        }
+        
+        .pagination .page-link:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .pagination .page-item.active .page-link {
+            background: #667eea;
+            border-color: #667eea;
+        }
+        
+        .filter-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .form-select {
+            border-radius: 10px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .empty-state i {
+            font-size: 5rem;
+            color: #bdc3c7;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-custom">
+    <div class="container">
+        <a class="navbar-brand" href="<?php echo BASE_URL; ?>">
+            <i class="fas fa-newspaper"></i> <?php echo NEWSPAPER_NAME; ?>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo BASE_URL; ?>">หน้าหลัก</a>
+                </li>
+                <?php if (isLoggedIn()): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo BASE_URL; ?>user/dashboard.php">
+                            <i class="fas fa-user"></i> แดชบอร์ด
+                        </a>
+                    </li>
+                <?php else: ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo BASE_URL; ?>public/login.php">เข้าสู่ระบบ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-download btn-sm ms-2" href="<?php echo BASE_URL; ?>public/register.php">
+                            ลงทะเบียน
+                        </a>
+                    </li>
+                <?php endif; ?>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-book-open"></i> หนังสือพิมพ์
+        </h1>
+        <p class="mb-0">ดาวน์โหลดหนังสือพิมพ์ที่เผยแพร่แล้วทั้งหมด</p>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="container">
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="GET" action="">
+            <div class="row align-items-end">
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <label class="filter-label">
+                        <i class="fas fa-calendar"></i> ปี
+                    </label>
+                    <select name="year" class="form-select" onchange="this.form.submit()">
+                        <option value="">ทุกปี</option>
+                        <?php foreach ($availableYears as $y): ?>
+                            <option value="<?php echo $y['year']; ?>" <?php echo ($year == $y['year']) ? 'selected' : ''; ?>>
+                                <?php echo $y['year'] + 543; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <label class="filter-label">
+                        <i class="fas fa-calendar-day"></i> เดือน
+                    </label>
+                    <select name="month" class="form-select" onchange="this.form.submit()">
+                        <option value="">ทุกเดือน</option>
+                        <?php foreach ($thaiMonths as $m => $monthName): ?>
+                            <option value="<?php echo $m; ?>" <?php echo ($month == $m) ? 'selected' : ''; ?>>
+                                <?php echo $monthName; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <a href="?" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-redo"></i> รีเซ็ต
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Results Info -->
+    <?php if ($totalNewspapers > 0): ?>
+    <div class="mb-4">
+        <p class="text-muted">
+            <i class="fas fa-newspaper"></i> พบหนังสือพิมพ์ทั้งหมด <?php echo number_format($totalNewspapers); ?> ฉบับ
+        </p>
+    </div>
+    <?php endif; ?>
+
+    <!-- Newspapers Grid -->
+    <?php if (empty($newspapers)): ?>
+    <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <h4>ไม่พบหนังสือพิมพ์</h4>
+        <p class="text-muted">ยังไม่มีหนังสือพิมพ์ที่เผยแพร่ในช่วงเวลาที่เลือก</p>
+        <a href="?" class="btn btn-download mt-3">
+            <i class="fas fa-search"></i> ดูทั้งหมด
+        </a>
+    </div>
+    <?php else: ?>
+    <div class="row g-4">
+        <?php foreach ($newspapers as $newspaper): ?>
+        <div class="col-md-3 col-sm-6">
+            <div class="newspaper-card">
+                <div class="newspaper-icon">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <div class="newspaper-date">
+                    <?php 
+                    $date = new DateTime($newspaper['newspaper_date']);
+                    echo $date->format('d ') . $thaiMonths[(int)$date->format('n')] . ' ' . ($date->format('Y') + 543);
+                    ?>
+                </div>
+                <div class="newspaper-info">
+                    <?php if ($newspaper['page_count']): ?>
+                        <i class="fas fa-file-alt"></i> <?php echo number_format($newspaper['page_count']); ?> หน้า
+                    <?php endif; ?>
+                    <?php if ($newspaper['advertisement_count']): ?>
+                        | <i class="fas fa-bullhorn"></i> <?php echo number_format($newspaper['advertisement_count']); ?> ประกาศ
+                    <?php endif; ?>
+                </div>
+                <?php if (!empty($newspaper['pdf_file'])): ?>
+                <a href="<?php echo NEWSPAPER_URL . $newspaper['pdf_file']; ?>" 
+                   target="_blank" 
+                   class="btn btn-download w-100"
+                   download>
+                    <i class="fas fa-download"></i> ดาวน์โหลด
+                </a>
+                <?php else: ?>
+                <button class="btn btn-secondary w-100" disabled>
+                    <i class="fas fa-hourglass-half"></i> กำลังจัดทำ
+                </button>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    
+    <!-- Pagination -->
+    <?php if ($totalPages > 1): ?>
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            <?php if ($page > 1): ?>
+            <li class="page-item">
+                <a class="page-link" href="?year=<?php echo $year; ?>&month=<?php echo $month; ?>&page=<?php echo $page - 1; ?>">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            <?php endif; ?>
+            
+            <?php
+            $start = max(1, $page - 2);
+            $end = min($totalPages, $page + 2);
+            
+            for ($i = $start; $i <= $end; $i++):
+            ?>
+            <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
+                <a class="page-link" href="?year=<?php echo $year; ?>&month=<?php echo $month; ?>&page=<?php echo $i; ?>">
+                    <?php echo $i; ?>
+                </a>
+            </li>
+            <?php endfor; ?>
+            
+            <?php if ($page < $totalPages): ?>
+            <li class="page-item">
+                <a class="page-link" href="?year=<?php echo $year; ?>&month=<?php echo $month; ?>&page=<?php echo $page + 1; ?>">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+            <?php endif; ?>
+        </ul>
+    </nav>
+    <?php endif; ?>
+    <?php endif; ?>
+    
+    <!-- Call to Action -->
+    <div class="text-center mt-5 mb-5">
+        <div class="p-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white;">
+            <h3 class="mb-3">ต้องการลงประกาศหนังสือพิมพ์?</h3>
+            <p class="mb-4">เริ่มต้นเพียง 50 บาท รวดเร็ว สะดวก ถูกต้องตามกฎหมาย</p>
+            <?php if (isLoggedIn()): ?>
+            <a href="<?php echo BASE_URL; ?>user/create-advertisement.php" class="btn btn-light btn-lg">
+                <i class="fas fa-plus-circle"></i> ลงประกาศเลย
+            </a>
+            <?php else: ?>
+            <a href="<?php echo BASE_URL; ?>public/register.php" class="btn btn-light btn-lg">
+                <i class="fas fa-rocket"></i> สมัครสมาชิกฟรี
+            </a>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="bg-dark text-white py-4 mt-5">
+    <div class="container text-center">
+        <p class="mb-2">
+            <i class="fas fa-phone"></i> 02-9825672, 064-2412040 | 
+            <i class="fas fa-envelope"></i> <?php echo ADMIN_EMAIL; ?>
+        </p>
+        <p class="small mb-0">
+            © <?php echo date('Y'); ?> <?php echo NEWSPAPER_NAME; ?>. All rights reserved.
+        </p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

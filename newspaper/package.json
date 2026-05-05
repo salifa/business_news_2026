@@ -1,0 +1,12 @@
+{
+  "name": "vnn-newspaper-puppeteer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Puppeteer PDF template generator for newspaper ads",
+  "scripts": {
+    "generate:pdf": "node scripts/generate-newspaper-pdf.js"
+  },
+  "dependencies": {
+    "puppeteer": "^24.9.0"
+  }
+}

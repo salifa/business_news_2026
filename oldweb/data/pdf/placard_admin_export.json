@@ -1,0 +1,180 @@
+
+pdfDocument = {
+{BEGIN backgroundImage}
+	background: {
+		image: {$backgroundImage},
+		{BEGIN bgWidth}
+		imgWidth: {$bgWidth},
+		imgHeight: {$bgHeight},
+		{END bgWidth}
+	},
+{END backgroundImage}
+	styles: {
+				bodycell: {
+			fontSize:12,
+		},
+		headcell: {
+			fontSize:12,
+			bold: true
+		},
+
+	
+	},
+	defaultStyle: {
+		fontSize: 14,
+	},
+	"content": [
+								
+{
+	table: {
+	
+				
+		location: 'top',
+		
+		
+		widths: [
+								"*", 
+					 ],	
+		
+	
+		body: [
+				
+				[
+																{
+	cellId: 'c1',
+	col:0,
+	row:0,
+		
+		
+	//	static colspan/rowspan
+		
+			
+	
+	
+			"text": [
+		
+				
+			{"text":"{$jspagetitlelabel placard_admin export}","hidden":"{$item_hide_export_header}","fontSize":30},
+				
+		  ],
+  "border": [ false, false, false, false ],
+              "alignment": 'left',
+  },
+
+											],
+		
+		]
+	}
+}
+,
+		
+				
+								
+{
+	table: {
+	
+				
+		location: 'grid',
+		
+		
+		widths: [
+								"%", 
+					 ],	
+		
+			heights: [
+								
+			"%",
+			 
+				],
+	
+		body: [
+				
+				[
+																{
+	cellId: 'c1',
+	col:0,
+	row:0,
+		
+		
+	//	static colspan/rowspan
+		
+			
+	
+	
+			"text": [
+		
+				
+			{"text":{$id_pdfvalue},"hidden":"{$item_hide_export_field}"},
+				
+				
+			{"text":{$subject_pdfvalue},"hidden":"{$item_hide_export_field4}"},
+				
+				
+			{"text":{$content_pdfvalue},"hidden":"{$item_hide_export_field1}"},
+				
+				
+			{"text":{$companyname_pdfvalue},"hidden":"{$item_hide_export_field2}"},
+				
+				
+			{"text":{$count_pdfvalue},"hidden":"{$item_hide_export_field3}"},
+				
+				
+			{"text":{$placard_to_pdfvalue},"hidden":"{$item_hide_export_field5}"},
+				
+				
+			{"text":{$meeting_date_pdfvalue},"hidden":"{$item_hide_export_field6}"},
+				
+				
+			{"text":{$meeting_time_pdfvalue},"hidden":"{$item_hide_export_field7}"},
+				
+				
+			{"text":{$placard_date_pdfvalue},"hidden":"{$item_hide_export_field8}"},
+				
+				
+			{"text":{$name_prefix_pdfvalue},"hidden":"{$item_hide_export_field9}"},
+				
+				
+			{"text":{$name_last_pdfvalue},"hidden":"{$item_hide_export_field10}"},
+				
+				
+			{"text":{$position_pdfvalue},"hidden":"{$item_hide_export_field11}"},
+				
+				
+			{"text":{$owner_id_pdfvalue},"hidden":"{$item_hide_export_field13}"},
+				
+				
+			{"text":{$publish_pdfvalue},"hidden":"{$item_hide_export_field14}"},
+				
+				
+			{"text":{$uuid_pdfvalue},"hidden":"{$item_hide_export_field15}"},
+				
+				
+			{"text":{$image1_pdfvalue},"hidden":"{$item_hide_export_field16}"},
+				
+				
+			{"text":{$create_date_pdfvalue},"hidden":"{$item_hide_export_field17}"},
+				
+				
+			{"text":{$pdf_file1_pdfvalue},"hidden":"{$item_hide_export_field18}"},
+				
+				
+			{"text":{$meeting_place_pdfvalue},"hidden":"{$item_hide_export_field12}"},
+				
+				
+			{"text":{$pdf_image_url_pdfvalue},"hidden":"{$item_hide_export_field19}"},
+				
+		  ],
+  "border": [ false, false, false, false ],
+              "alignment": 'left',
+  },
+
+											],
+		
+		]
+	}
+}
+,
+		
+					]
+}
+  

@@ -1,0 +1,16 @@
+A,h2,h4,Label,body{
+@import url('https://fonts.googleapis.com/css?family=Athiti|Sarabun&display=swap');
+color:#003333;
+font-family:Athiti ,sans-serif !important;
+font-size:12pt;
+line-height: 1.8;
+}
+
+
+.btn {
+border-radius: 14px !important ;
+}
+
+.form-control {
+border-radius: 14px !important ;
+}

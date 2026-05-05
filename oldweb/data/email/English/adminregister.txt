@@ -1,0 +1,11 @@
+Notification on registering
+
+User registered at %url%
+
+ID: %ID_value%
+Username: %username_value%
+Email: %email_value%
+Fullname: %fullname_value%
+Groupid: %groupid_value%
+Ext Security Id: %ext_security_id_value%
+Apikey: %apikey_value%

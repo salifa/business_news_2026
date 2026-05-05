@@ -1,0 +1,177 @@
+<?php
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../classes/User.php';
+
+$user = new User();
+$error = '';
+$success = '';
+
+// Handle login form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
+        $error = 'Invalid request. Please try again.';
+    } else {
+        $email = sanitize($_POST['email']);
+        $password = $_POST['password'];
+        $remember = isset($_POST['remember']);
+        
+        $result = $user->login($email, $password, $remember);
+        
+        if ($result['success']) {
+            redirect(BASE_URL . 'user/dashboard.php');
+        } else {
+            $error = $result['message'];
+        }
+    }
+}
+
+// If already logged in, redirect to dashboard
+if (isLoggedIn()) {
+    redirect(BASE_URL . 'user/dashboard.php');
+}
+?>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ - <?php echo NEWSPAPER_NAME; ?></title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Google Sans', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+            max-width: 450px;
+            width: 100%;
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .login-body {
+            padding: 40px 30px;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .btn-primary-custom:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="login-header">
+        <h1 class="h3 mb-2">
+            <i class="fas fa-newspaper"></i>
+            เข้าสู่ระบบ
+        </h1>
+        <p class="mb-0"><?php echo NEWSPAPER_NAME; ?></p>
+    </div>
+    
+    <div class="login-body">
+        <?php if ($error): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle"></i> <?php echo $error; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+        
+        <?php if ($success): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle"></i> <?php echo $success; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+        
+        <form method="POST" action="">
+            <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">อีเมล</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                    <input type="email" class="form-control" id="email" name="email" required 
+                           placeholder="your@email.com" value="<?php echo isset($_POST['email']) ? escape($_POST['email']) : ''; ?>">
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">รหัสผ่าน</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" class="form-control" id="password" name="password" required
+                           placeholder="••••••••">
+                </div>
+            </div>
+            
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                <label class="form-check-label" for="remember">
+                    จดจำการเข้าสู่ระบบ (30 วัน)
+                </label>
+            </div>
+            
+            <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-primary-custom btn-lg">
+                    <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
+                </button>
+            </div>
+        </form>
+        
+        <div class="text-center">
+            <a href="forgot-password.php" class="text-decoration-none">ลืมรหัสผ่าน?</a>
+        </div>
+        
+        <hr class="my-4">
+        
+        <div class="text-center">
+            <p class="mb-0">ยังไม่มีบัญชี? <a href="register.php" class="fw-bold text-decoration-none">ลงทะเบียนฟรี</a></p>
+        </div>
+        
+        <div class="text-center mt-3">
+            <a href="<?php echo BASE_URL; ?>" class="text-muted text-decoration-none">
+                <i class="fas fa-home"></i> กลับหน้าแรก
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
