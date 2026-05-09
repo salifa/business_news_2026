@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newsletter Editor - GrapesJS</title>
+    
+    <!-- GrapesJS Core -->
+    <link rel="stylesheet" href="https://unpkg.com/grapesjs@0.21.7/dist/css/grapes.min.css">
+    
+    <!-- GrapesJS Newsletter Plugin -->
+    <link rel="stylesheet" href="https://unpkg.com/grapesjs-preset-newsletter@1.0.3/dist/grapesjs-preset-newsletter.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { height: 100%; font-family: 'Prompt', 'Sarabun', Arial, sans-serif; }
+        
+        #editor-container { height: 100vh; display: flex; flex-direction: column; }
+        
+        #toolbar {
+            background: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        #toolbar h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        #toolbar-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #toolbar button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        #toolbar button:hover { background: #2980b9; }
+        #toolbar button.success { background: #27ae60; }
+        #toolbar button.success:hover { background: #229954; }
+        #toolbar button.danger { background: #e74c3c; }
+        #toolbar button.danger:hover { background: #c0392b; }
+        
+        #gjs { flex: 1; }
+        
+        .gjs-block {
+            min-height: 50px;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        /* Thai font support - Prompt & Sarabun from Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&family=Sarabun:wght@300;400;600;700&display=swap');
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .modal-close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .modal-close:hover { color: #000; }
+        
+        .field-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .field-item {
+            background: #ecf0f1;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-align: center;
+        }
+        
+        .field-item:hover {
+            background: #3498db;
+            color: white;
+        }
+        
+        .field-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .field-value {
+            font-size: 12px;
+            color: #666;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .field-item:hover .field-value {
+            color: #ecf0f1;
+        }
+    </style>
+</head>
+<body>
+    <div id="editor-container">
+        <!-- Toolbar -->
+        <div id="toolbar">
+            <h1>📰 Newsletter Template Editor</h1>
+            <div id="toolbar-buttons">
+                <button onclick="loadSampleData()">📊 Load Sample Data</button>
+                <button onclick="showFieldsModal()">🏷️ Insert Fields</button>
+                <button onclick="loadTemplate()">📂 Load Template</button>
+                <button onclick="saveTemplate()" class="success">💾 Save Template</button>
+                <button onclick="exportHTML()" class="success">📤 Export HTML</button>
+                <button onclick="clearCanvas()" class="danger">🗑️ Clear</button>
+            </div>
+        </div>
+        
+        <!-- GrapesJS Editor -->
+        <div id="gjs"></div>
+    </div>
+    
+    <!-- Fields Modal -->
+    <div id="fieldsModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeFieldsModal()">&times;</span>
+            <h2>📋 Database Fields</h2>
+            <p>Click on a field to insert it into your design:</p>
+            <div id="fieldsList" class="field-list">
+                <div class="field-item">Loading...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- GrapesJS Scripts -->
+    <script src="https://unpkg.com/grapesjs@0.21.7/dist/grapes.min.js"></script>
+    <script src="https://unpkg.com/grapesjs-preset-newsletter@1.0.3/dist/grapesjs-preset-newsletter.min.js"></script>
+    
+    <script>
+        // Global variables
+        let editor;
+        let sampleData = {};
+        let fieldDefinitions = {};
+        
+        // Initialize GrapesJS
+        document.addEventListener('DOMContentLoaded', function() {
+            editor = grapesjs.init({
+                container: '#gjs',
+                height: '100%',
+                width: 'auto',
+                plugins: ['grapesjs-preset-newsletter'],
+                pluginsOpts: {
+                    'grapesjs-preset-newsletter': {
+                        modalTitleImport: 'Import Template',
+                        // Customize blocks
+                        blocks: ['sect100', 'sect50', 'sect30', 'sect37', 'button', 'divider', 'text', 'text-sect', 'image', 'quote', 'link', 'link-block', 'grid-items', 'list-items']
+                    }
+                },
+                storageManager: false,
+                canvas: {
+                    styles: [
+                        'https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&family=Sarabun:wght@300;400;600;700&display=swap'
+                    ],
+                    scripts: [],
+                },
+                assetManager: {
+                    upload: false,
+                },
+                deviceManager: {
+                    devices: [{
+                        name: 'Desktop',
+                        width: '',
+                    },{
+                        name: 'Tablet',
+                        width: '768px',
+                        widthMedia: '768px',
+                    },{
+                        name: 'Mobile',
+                        width: '320px',
+                        widthMedia: '480px',
+                    }]
+                },
+            });
+            
+            // Add custom blocks for database fields
+            addCustomBlocks();
+            
+            // Load sample data on init
+            loadSampleData();
+            
+            // Set default newsletter template
+            setDefaultTemplate();
+        });
+        
+        // Add custom blocks for Thai text
+        function addCustomBlocks() {
+            const blockManager = editor.BlockManager;
+            
+            // Add Thai text block
+            blockManager.add('thai-text', {
+                label: 'ข้อความไทย',
+                category: 'Basic',
+                content: '<div style="font-family: \'Prompt\', \'Sarabun\', sans-serif; padding: 10px; font-size: 16px;">ข้อความภาษาไทย</div>',
+                attributes: { class: 'fa fa-font' }
+            });
+            
+            // Add company header block
+            blockManager.add('company-header', {
+                label: 'หัวบริษัท',
+                category: 'Newsletter',
+                content: `
+                    <div style="text-align: center; padding: 30px; background: #f8f9fa; border-bottom: 3px solid #3498db;">
+                        <h1 style="font-family: 'Prompt', 'Sarabun', sans-serif; font-size: 28px; font-weight: bold; color: #2c3e50; margin: 0;">
+                            {{companyname}}
+                        </h1>
+                        <p style="font-family: 'Prompt', 'Sarabun', sans-serif; font-size: 18px; color: #7f8c8d; margin-top: 10px;">
+                            {{title}}
+                        </p>
+                    </div>
+                `
+            });
+            
+            // Add meeting info block
+            blockManager.add('meeting-info', {
+                label: 'ข้อมูลการประชุม',
+                category: 'Newsletter',
+                content: `
+                    <div style="padding: 20px; font-family: 'Prompt', 'Sarabun', sans-serif; font-size: 16px;">
+                        <p style="margin-bottom: 15px;"><strong>เรียน:</strong> {{placard_to}}</p>
+                        <p style="margin-bottom: 15px;"><strong>ครั้งที่:</strong> {{meeting_number}}</p>
+                        <p style="margin-bottom: 15px;"><strong>วันที่:</strong> {{meeting_date_thai}}</p>
+                        <p style="margin-bottom: 15px;"><strong>เวลา:</strong> {{meeting_time_formatted}}</p>
+                        <p style="margin-bottom: 15px;"><strong>สถานที่:</strong> {{meeting_place}}</p>
+                    </div>
+                `
+            });
+            
+            // Add agenda block
+            blockManager.add('agenda-block', {
+                label: 'วาระการประชุม',
+                category: 'Newsletter',
+                content: `
+                    <div style="padding: 20px; font-family: 'Prompt', 'Sarabun', sans-serif; font-size: 16px;">
+                        <h2 style="font-family: 'Prompt', 'Sarabun', sans-serif; font-size: 20px; font-weight: bold; color: #2c3e50; margin-bottom: 15px;">วาระการประชุม</h2>
+                        <div style="white-space: pre-line; line-height: 1.8;">{{meeting_agenda}}</div>
+                    </div>
+                `
+            });
+        }
+        
+        // Set default newsletter template
+        function setDefaultTemplate() {
+            const defaultTemplate = `
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f4f4f4; padding: 20px;">
+                    <tr>
+                        <td align="center">
+                            <table cellpadding="0" cellspacing="0" border="0" width="600" style="background-color: #ffffff; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                <!-- Header -->
+                                <tr>
+                                    <td style="padding: 30px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                        <h1 style="font-family: 'Prompt', 'Sarabun', sans-serif; color: #ffffff; margin: 0; font-size: 32px; font-weight: bold;">
+                                            หนังสือพิมพ์ เครือข่ายบัญชี
+                                        </h1>
+                                        <p style="font-family: 'Prompt', 'Sarabun', sans-serif; color: #f0f0f0; margin: 10px 0 0 0; font-size: 16px;">
+                                            ISSN 2408-2015 | ใบอนุญาต สสช27/2558
+                                        </p>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Company Name -->
+                                <tr>
+                                    <td style="padding: 30px; background-color: #ecf0f1;">
+                                        <h2 style="font-family: 'Prompt', 'Sarabun', sans-serif; color: #2c3e50; margin: 0; font-size: 24px; font-weight: bold; text-align: center;">
+                                            {{companyname}}
+                                        </h2>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Title -->
+                                <tr>
+                                    <td style="padding: 20px 30px;">
+                                        <h3 style="font-family: 'Prompt', 'Sarabun', sans-serif; color: #34495e; margin: 0; font-size: 20px; font-weight: bold;">
+                                            {{title}}
+                                        </h3>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Content -->
+                                <tr>
+                                    <td style="padding: 20px 30px; font-family: 'Prompt', 'Sarabun', sans-serif; line-height: 1.8; color: #555; font-size: 16px;">
+                                        <p><strong>เรียน:</strong> {{placard_to}}</p>
+                                        <p><strong>ครั้งที่:</strong> {{meeting_number}}</p>
+                                        <br>
+                                        <div style="white-space: pre-line;">{{content}}</div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Meeting Details -->
+                                <tr>
+                                    <td style="padding: 20px 30px; background-color: #f8f9fa;">
+                                        <h4 style="font-family: 'Prompt', 'Sarabun', sans-serif; color: #2c3e50; margin: 0 0 15px 0; font-size: 18px; font-weight: bold;">รายละเอียดการประชุม</h4>
+                                        <table cellpadding="5" cellspacing="0" border="0" width="100%" style="font-family: 'Prompt', 'Sarabun', sans-serif; font-size: 16px;">
+                                            <tr>
+                                                <td width="100" style="color: #7f8c8d;"><strong>วันที่:</strong></td>
+                                                <td style="color: #2c3e50;">{{meeting_date_thai}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #7f8c8d;"><strong>เวลา:</strong></td>
+                                                <td style="color: #2c3e50;">{{meeting_time_formatted}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #7f8c8d;"><strong>สถานที่:</strong></td>
+                                                <td style="color: #2c3e50;">{{meeting_place}}</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Agenda -->
+                                <tr>
+                                    <td style="padding: 20px 30px;">
+                                        <h4 style="font-family: 'Prompt', 'Sarabun', sans-serif; color: #2c3e50; margin: 0 0 15px 0; font-size: 18px; font-weight: bold;">วาระการประชุม</h4>
+                                        <div style="font-family: 'Prompt', 'Sarabun', sans-serif; line-height: 1.8; color: #555; white-space: pre-line; font-size: 16px;">{{meeting_agenda}}</div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Footer -->
+                                <tr>
+                                    <td style="padding: 20px 30px; text-align: center; background-color: #34495e; color: #ecf0f1; font-family: 'Prompt', 'Sarabun', sans-serif; font-size: 14px;">
+                                        <p style="margin: 0;">วันที่ลงโฆษณา: {{placard_date_thai}}</p>
+                                        <p style="margin: 10px 0 0 0;">หนังสือพิมพ์ เครือข่ายบัญชี | www.vnn.mac.in.th</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            `;
+            
+            editor.setComponents(defaultTemplate);
+        }
+        
+        // Load sample data from database
+        async function loadSampleData() {
+            try {
+                const response = await fetch('api/get_sample_ad.php');
+                const result = await response.json();
+                
+                if (result.success) {
+                    sampleData = result.data;
+                    fieldDefinitions = result.fields;
+                    alert('✅ โหลดข้อมูลตัวอย่างเรียบร้อย: ' + sampleData.companyname);
+                    
+                    // Update the canvas with sample data
+                    replacePlaceholders();
+                } else {
+                    alert('❌ ไม่สามารถโหลดข้อมูลได้: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error loading sample data:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+        }
+        
+        // Replace placeholders with actual data
+        function replacePlaceholders() {
+            let html = editor.getHtml();
+            
+            for (const [key, value] of Object.entries(sampleData)) {
+                if (value !== null && value !== undefined) {
+                    const regex = new RegExp(`{{${key}}}`, 'g');
+                    html = html.replace(regex, value);
+                }
+            }
+            
+            editor.setComponents(html);
+        }
+        
+        // Show fields modal
+        function showFieldsModal() {
+            if (Object.keys(sampleData).length === 0) {
+                alert('⚠️ กรุณาโหลดข้อมูลตัวอย่างก่อน');
+                return;
+            }
+            
+            const modal = document.getElementById('fieldsModal');
+            const fieldsList = document.getElementById('fieldsList');
+            
+            // Build fields list
+            let html = '';
+            for (const [key, label] of Object.entries(fieldDefinitions)) {
+                const value = sampleData[key] || '';
+                const displayValue = String(value).length > 30 ? String(value).substring(0, 30) + '...' : value;
+                
+                html += `
+                    <div class="field-item" onclick="insertField('${key}')">
+                        <div class="field-name">${label}</div>
+                        <div class="field-value">{{${key}}}</div>
+                        <div class="field-value" style="margin-top: 5px; font-style: italic;">${displayValue}</div>
+                    </div>
+                `;
+            }
+            
+            fieldsList.innerHTML = html;
+            modal.style.display = 'block';
+        }
+        
+        // Close fields modal
+        function closeFieldsModal() {
+            document.getElementById('fieldsModal').style.display = 'none';
+        }
+        
+        // Insert field placeholder
+        function insertField(fieldKey) {
+            const selected = editor.getSelected();
+            
+            if (selected) {
+                const currentContent = selected.view.el.innerHTML;
+                selected.components(`${currentContent} {{${fieldKey}}}`);
+            } else {
+                alert('⚠️ กรุณาเลือก element ที่ต้องการแทรกข้อมูล');
+            }
+            
+            closeFieldsModal();
+        }
+        
+        // Save template
+        async function saveTemplate() {
+            const name = prompt('ชื่อเทมเพลต:', 'newsletter_' + Date.now());
+            if (!name) return;
+            
+            const html = editor.getHtml();
+            const css = editor.getCss();
+            const gjsData = editor.getProjectData();
+            
+            try {
+                const response = await fetch('api/templates.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        html: html,
+                        css: css,
+                        gjs_data: gjsData
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ บันทึกเทมเพลตเรียบร้อย: ' + name);
+                } else {
+                    alert('❌ ไม่สามารถบันทึกได้: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error saving template:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+        }
+        
+        // Load template
+        async function loadTemplate() {
+            try {
+                // Get list of templates
+                const response = await fetch('api/templates.php');
+                const result = await response.json();
+                
+                if (!result.success || result.data.length === 0) {
+                    alert('⚠️ ไม่มีเทมเพลตที่บันทึกไว้');
+                    return;
+                }
+                
+                // Show selection
+                let templateList = 'เลือกเทมเพลต:\n\n';
+                result.data.forEach((tpl, index) => {
+                    templateList += `${index + 1}. ${tpl.name} (${tpl.updated_at})\n`;
+                });
+                
+                const selection = prompt(templateList + '\nกรอกหมายเลข:');
+                if (!selection) return;
+                
+                const index = parseInt(selection) - 1;
+                if (index < 0 || index >= result.data.length) {
+                    alert('❌ หมายเลขไม่ถูกต้อง');
+                    return;
+                }
+                
+                const selectedTemplate = result.data[index];
+                
+                // Load template data
+                const loadResponse = await fetch(`api/templates.php?name=${selectedTemplate.name}`);
+                const loadResult = await loadResponse.json();
+                
+                if (loadResult.success) {
+                    const templateData = loadResult.data;
+                    
+                    if (templateData.gjs_data) {
+                        editor.loadProjectData(templateData.gjs_data);
+                    } else {
+                        editor.setComponents(templateData.html);
+                        editor.setStyle(templateData.css);
+                    }
+                    
+                    alert('✅ โหลดเทมเพลตเรียบร้อย: ' + templateData.name);
+                } else {
+                    alert('❌ ไม่สามารถโหลดเทมเพลตได้: ' + loadResult.message);
+                }
+            } catch (error) {
+                console.error('Error loading template:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+        }
+        
+        // Export HTML
+        function exportHTML() {
+            replacePlaceholders();
+            
+            const html = editor.getHtml();
+            const css = `<style>${editor.getCss()}</style>`;
+            const fullHtml = `<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newsletter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Prompt', 'Sarabun', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    ${css}
+</head>
+<body>
+${html}
+</body>
+</html>`;
+            
+            // Download
+            const blob = new Blob([fullHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'newsletter_' + Date.now() + '.html';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            alert('✅ Export HTML เรียบร้อย');
+        }
+        
+        // Clear canvas
+        function clearCanvas() {
+            if (confirm('⚠️ ต้องการล้างหน้าจอใช่หรือไม่?')) {
+                editor.setComponents('');
+                editor.setStyle('');
+            }
+        }
+        
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('fieldsModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

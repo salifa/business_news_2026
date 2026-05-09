@@ -1,0 +1,1 @@
+"""Template configurations and layouts"""
