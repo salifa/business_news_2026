@@ -1,0 +1,57 @@
+# Large files and backups
+*.tar.gz
+*.zip
+*.sql.gz
+*_backup_*.tar.gz
+
+# Generated PDFs
+newspaper-*.pdf
+*.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# PHP
+vendor/
+composer.lock
+
+# Logs
+*.log
+logs/
+temp/
+
+# Database
+*.sqlite
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
+.directory
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Generated files
+generated_pdfs/
+newspaper/generated_pdfs/*.pdf
+newspaper/temp/
+newspaper/logs/
+
+# Credentials
+config.php
+.env
+*.pem
+*.key
