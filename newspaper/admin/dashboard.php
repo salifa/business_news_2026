@@ -147,6 +147,12 @@ $adStats = $ad->getStatistics();
                     <a class="nav-link" href="manage-users.php">
                         <i class="fas fa-users"></i> จัดการผู้ใช้
                     </a>
+                    <a class="nav-link" href="generate-newspaper.php">
+                        <i class="fas fa-file-pdf"></i> สร้างหนังสือพิมพ์
+                    </a>
+                    <a class="nav-link" href="manage-newsletter.php">
+                        <i class="fas fa-envelope-open-text"></i> จัดการจดหมายข่าว
+                    </a>
                     <a class="nav-link" href="<?php echo BASE_URL; ?>public/download.php" target="_blank">
                         <i class="fas fa-download"></i> ดูหนังสือพิมพ์ทั้งหมด
                     </a>

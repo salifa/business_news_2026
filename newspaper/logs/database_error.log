@@ -12,3 +12,11 @@
 [2026-04-29 16:20:11] SQLSTATE[22007]: Invalid datetime format: 1366 Incorrect integer value: 'admin@vnn.mac.in.th' for column `vnnsbiz`.`payment_transactions`.`approved_by` at row 1
 [2026-04-30 11:19:54] SQLSTATE[HY093]: Invalid parameter number
 [2026-04-30 15:18:42] SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '2026-04-30' for key 'unique_issue_date'
+[2026-05-15 16:11:40] SQLSTATE[HY093]: Invalid parameter number
+[2026-05-15 16:11:40] SQLSTATE[HY093]: Invalid parameter number
+[2026-05-15 16:11:59] SQLSTATE[HY093]: Invalid parameter number
+[2026-05-15 16:11:59] SQLSTATE[HY093]: Invalid parameter number
+[2026-05-15 16:13:18] SQLSTATE[HY093]: Invalid parameter number
+[2026-05-15 16:13:18] SQLSTATE[HY093]: Invalid parameter number
+[2026-05-15 16:15:36] SQLSTATE[HY093]: Invalid parameter number
+[2026-05-15 16:15:36] SQLSTATE[HY093]: Invalid parameter number

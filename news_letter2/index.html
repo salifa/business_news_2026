@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>วารสารบัญชี - จดหมายข่าว</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Fixed Left Sidebar Menu -->
+    <nav class="sidebar-menu">
+        <div class="menu-header">
+            <h3>จดหมายข่าว</h3>
+        </div>
+        <div class="menu-items">
+            <a href="#cover" class="menu-item active" data-page="cover">
+                <span class="icon">📰</span>
+                <span class="label">หน้าปก</span>
+            </a>
+            <a href="#page-1" class="menu-item" data-page="page-1">
+                <span class="icon">📝</span>
+                <span class="label">บทบรรณาธิการ</span>
+            </a>
+            <a href="#page-2" class="menu-item" data-page="page-2">
+                <span class="icon">📊</span>
+                <span class="label">วิเคราะห์การเงิน</span>
+            </a>
+            <a href="#page-3" class="menu-item" data-page="page-3">
+                <span class="icon">📈</span>
+                <span class="label">ข้อมูลเชิงลึกอุตสาหกรรม</span>
+            </a>
+        </div>
+        <div class="menu-actions">
+            <button class="menu-button" onclick="printNewsletter()" title="พิมพ์จดหมายข่าว">
+                <span class="icon">🖨️</span>
+                <span class="label">พิมพ์</span>
+            </button>
+            <button class="menu-button primary" onclick="saveToPDF()" title="บันทึกเป็น PDF">
+                <span class="icon">💾</span>
+                <span class="label">บันทึก PDF</span>
+            </button>
+            <button class="menu-button" onclick="toggleMenu()" title="ซ่อนเมนู" id="toggle-menu-btn">
+                <span class="icon">👁️</span>
+                <span class="label">ซ่อนเมนู</span>
+            </button>
+        </div>
+        <div class="menu-footer">
+            <small>ฉบับที่ <span id="menu-issue-number">001</span></small>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <div class="content-wrapper">
+    <!-- Cover Page -->
+    <div class="page cover-page" id="cover">
+        <header class="fixed-header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>วารสารบัญชีไทย</h1>
+                </div>
+                <div class="header-info">
+                    <span id="current-date"></span>
+                    <span class="issue-number">ฉบับที่ <span id="issue-number">001</span></span>
+                </div>
+            </div>
+        </header>
+
+        <main class="cover-content">
+            <div class="hero-section">
+                <div class="featured-image" id="cover-image">
+                    <img src="placeholder-cover.jpg" alt="Cover Story" />
+                </div>
+                <div class="cover-headline">
+                    <h2 id="main-headline">Your Headline Here</h2>
+                    <p class="cover-subheadline" id="sub-headline">Subtitle or brief description</p>
+                </div>
+            </div>
+
+            <div class="cover-stories">
+                <h3>ในฉบับนี้:</h3>
+                <ul id="cover-stories-list">
+                    <!-- Stories will be populated by JavaScript -->
+                </ul>
+            </div>
+
+            <div class="cover-highlights">
+                <div class="highlight-card" id="highlight-1">
+                    <img src="placeholder-1.jpg" alt="Story 1">
+                    <h4></h4>
+                    <p></p>
+                </div>
+                <div class="highlight-card" id="highlight-2">
+                    <img src="placeholder-2.jpg" alt="Story 2">
+                    <h4></h4>
+                    <p></p>
+                </div>
+                <div class="highlight-card" id="highlight-3">
+                    <img src="placeholder-3.jpg" alt="Story 3">
+                    <h4></h4>
+                    <p></p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="fixed-footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>&copy; <span id="current-year"></span> วารสารบัญชีไทย. สงวนลิขสิทธิ์.</p>
+                </div>
+                <div class="footer-center">
+                    <p>www.thaiaccounting.com | info@thaiaccounting.com</p>
+                </div>
+                <div class="footer-right">
+                    <p>หน้า <span class="page-number">1</span></p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Letter Pages (Corporate Format) -->
+    <div class="page letter-page" id="page-1">
+        <header class="fixed-header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>วารสารบัญชีไทย</h1>
+                </div>
+                <div class="header-info">
+                    <span id="letter-date"></span>
+                </div>
+            </div>
+        </header>
+
+        <main class="letter-content">
+            <div class="letterhead">
+                <div class="company-info">
+                    <h2 id="company-name">ชื่อบริษัท</h2>
+                    <p id="company-address">ที่อยู่บริษัท</p>
+                </div>
+                <div class="letter-meta">
+                    <p class="letter-date-full" id="letter-date-full"></p>
+                </div>
+            </div>
+
+            <div class="letter-body" id="letter-body-1">
+                <!-- Content will be populated by JavaScript from JSON -->
+            </div>
+        </main>
+
+        <footer class="fixed-footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>&copy; <span class="current-year"></span> วารสารบัญชีไทย. สงวนลิขสิทธิ์.</p>
+                </div>
+                <div class="footer-center">
+                    <p>www.thaiaccounting.com | info@thaiaccounting.com</p>
+                </div>
+                <div class="footer-right">
+                    <p>หน้า <span class="page-number">2</span></p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Page 2: Financial Analysis -->
+    <div class="page letter-page" id="page-2">
+        <header class="fixed-header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>วารสารบัญชีไทย</h1>
+                </div>
+                <div class="header-info">
+                    <span class="letter-date"></span>
+                </div>
+            </div>
+        </header>
+
+        <main class="letter-content">
+            <div class="letter-body" id="letter-body-2">
+                <!-- Content will be populated by JavaScript from JSON -->
+            </div>
+        </main>
+
+        <footer class="fixed-footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>&copy; <span class="current-year"></span> วารสารบัญชีไทย. สงวนลิขสิทธิ์.</p>
+                </div>
+                <div class="footer-center">
+                    <p>www.thaiaccounting.com | info@thaiaccounting.com</p>
+                </div>
+                <div class="footer-right">
+                    <p>หน้า <span class="page-number">3</span></p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Page 3: Industry Insights -->
+    <div class="page letter-page" id="page-3">
+        <header class="fixed-header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>วารสารบัญชีไทย</h1>
+                </div>
+                <div class="header-info">
+                    <span class="letter-date"></span>
+                </div>
+            </div>
+        </header>
+
+        <main class="letter-content">
+            <div class="letter-body" id="letter-body-3">
+                <!-- Content will be populated by JavaScript from JSON -->
+            </div>
+        </main>
+
+        <footer class="fixed-footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>&copy; <span class="current-year"></span> วารสารบัญชีไทย. สงวนลิขสิทธิ์.</p>
+                </div>
+                <div class="footer-center">
+                    <p>www.thaiaccounting.com | info@thaiaccounting.com</p>
+                </div>
+                <div class="footer-right">
+                    <p>หน้า <span class="page-number">4</span></p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Additional Letter Pages (will be generated dynamically) -->
+    <div id="dynamic-pages-container"></div>
+
+    <!-- PDF Pages Container -->
+    <div id="pdf-pages-container"></div>
+    
+    <!-- PDF Advertisements Container (Full Page) -->
+    <div id="pdf-ads-container"></div>
+    </div>
+    <!-- End Content Wrapper -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
