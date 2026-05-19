@@ -5,7 +5,6 @@ require_once __DIR__ . '/../classes/Newspaper.php';
 
 requireAdmin();
 
-$newspaper = new Newspaper();
 $newspaperId = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
 if (!$newspaperId) {
@@ -13,24 +12,9 @@ if (!$newspaperId) {
 	exit;
 }
 
-// Get newspaper record
-$np = $newspaper->getNewspaperById($newspaperId);
-if (!$np) {
-	die('ไม่พบข้อมูลหนังสือพิมพ์');
-}
-
-// Get advertisements for this newspaper
-$ads = $newspaper->getAdvertisementsForNewspaper($newspaperId);
-
-// Get JSON data that would be sent to Puppeteer
-$token = hash('sha256', DB_NAME . '|' . DB_USER . '|' . DB_HOST);
-$apiUrl = BASE_URL . 'api/newspaper-data.php?date=' . urlencode($np['newspaper_date']) . '&newspaper_id=' . urlencode($newspaperId) . '&token=' . urlencode($token);
-
-// Fetch API data
-$apiData = @file_get_contents($apiUrl);
-$jsonData = $apiData ? json_decode($apiData, true) : null;
-
-$pdfPath = !empty($np['pdf_file']) ? BASE_URL . 'public/newspapers/pdf/' . $np['pdf_file'] : null;
+// Redirect to newsletter viewer
+header('Location: /news_letter2/index.html?id=' . $newspaperId);
+exit;
 ?>
 <!DOCTYPE html>
 <html lang="th">

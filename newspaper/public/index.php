@@ -685,8 +685,8 @@ $latestNewspapers = $db->query($sql);
             <?php endforeach; ?>
         </div>
         <div class="text-center mt-4">
-            <a href="<?php echo BASE_URL; ?>public/newspapers/" class="btn btn-register btn-lg">
-                <i class="fas fa-book-open"></i> ดูหนังสือพิมพ์ทั้งหมด
+            <a href="/news_letter2/index.html" class="btn btn-register btn-lg" target="_blank">
+                <i class="fas fa-newspaper"></i> ดูจดหมายข่าวทั้งหมด
             </a>
         </div>
         <?php else: ?>

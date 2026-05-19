@@ -330,12 +330,11 @@ $thaiMonths = [
                         | <i class="fas fa-bullhorn"></i> <?php echo number_format($newspaper['advertisement_count']); ?> ประกาศ
                     <?php endif; ?>
                 </div>
-                <?php if (!empty($newspaper['pdf_file'])): ?>
-                <a href="<?php echo NEWSPAPER_URL . $newspaper['pdf_file']; ?>" 
+                <?php if ($newspaper['status'] === 'published'): ?>
+                <a href="/news_letter2/index.html?id=<?php echo $newspaper['id']; ?>" 
                    target="_blank" 
-                   class="btn btn-download w-100"
-                   download>
-                    <i class="fas fa-download"></i> ดาวน์โหลด
+                   class="btn btn-download w-100">
+                    <i class="fas fa-eye"></i> ดูจดหมายข่าว
                 </a>
                 <?php else: ?>
                 <button class="btn btn-secondary w-100" disabled>

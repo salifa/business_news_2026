@@ -114,9 +114,9 @@ echo "<!DOCTYPE html>
                     </div>
                     
                     <h5 class='mt-4 mb-3'>🌐 Public Access</h5>
-                    <a href='/newspaper/public/download.php' class='btn btn-outline-secondary btn-lg w-100'>
-                        <i class='bi bi-download'></i> Public Download Page
-                        <br><small>No login required - anyone can download published PDFs</small>
+                    <a href='/news_letter2/index.html' class='btn btn-outline-secondary btn-lg w-100' target='_blank'>
+                        <i class='bi bi-newspaper'></i> Newsletter Viewer
+                        <br><small>No login required - anyone can view published newsletters</small>
                     </a>
                 </div>
                 

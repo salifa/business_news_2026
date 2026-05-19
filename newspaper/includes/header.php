@@ -78,8 +78,8 @@ $pageName = basename($_SERVER['PHP_SELF'], '.php');
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo BASE_URL; ?>public/download.php" target="_blank">
-                            <i class="bi bi-download"></i> หน้าดาวน์โหลด
+                        <a class="nav-link" href="/news_letter2/index.html" target="_blank">
+                            <i class="bi bi-newspaper"></i> จดหมายข่าว
                         </a>
                     </li>
                 </ul>

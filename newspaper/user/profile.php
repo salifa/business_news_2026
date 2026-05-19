@@ -143,8 +143,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                     </a>
                     <a class="nav-link active" href="profile.php">
                         <i class="fas fa-user-cog"></i> ตั้งค่าบัญชี
-                    </a>                    <a class="nav-link" href="<?php echo BASE_URL; ?>public/download.php" target="_blank">
-                        <i class="fas fa-file-pdf"></i> ดูหนังสือพิมพ์
+                    </a>                    <a class="nav-link" href="/news_letter2/index.html" target="_blank">
+                        <i class="fas fa-newspaper"></i> ดูจดหมายข่าว
                     </a>                    
                     <?php if (isAdmin()): ?>
                         <hr class="my-3">

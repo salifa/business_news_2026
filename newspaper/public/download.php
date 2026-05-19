@@ -10,9 +10,15 @@ $placardIssue = new PlacardIssue();
 // Get recent issues
 $issues = $placardIssue->getRecentIssues(25);
 
-// Handle download request
+// Handle download request - redirect to newsletter viewer
 if (isset($_GET['download']) && is_numeric($_GET['download'])) {
-    $placardIssue->downloadIssue($_GET['download']);
+    header('Location: /news_letter2/index.html?id=' . (int)$_GET['download']);
+    exit;
+}
+
+// Handle view request (same as download, kept for compatibility)
+if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+    header('Location: /news_letter2/index.html?id=' . (int)$_GET['id']);
     exit;
 }
 
@@ -36,7 +42,7 @@ if (!function_exists('formatFileSize')) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ดาวน์โหลดหนังสือพิมพ์ประกาศโฆษณา - <?php echo NEWSPAPER_NAME; ?></title>
+    <title>ดูหนังสือพิมพ์ประกาศโฆษณา - <?php echo NEWSPAPER_NAME; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
@@ -154,7 +160,7 @@ if (!function_exists('formatFileSize')) {
         <!-- Header -->
         <div class="header-section">
             <h1><i class="bi bi-newspaper"></i> หนังสือพิมพ์ข่าวสารนักบัญชี</h1>
-            <p class="subtitle">ดาวน์โหลดประกาศโฆษณาบริษัท - เอกสารทางกฎหมายสำหรับการบัญชี</p>
+            <p class="subtitle">ดูประกาศโฆษณาบริษัท - เอกสารทางกฎหมายสำหรับการบัญชี</p>
             <div class="mt-3">
                 <span class="stats-badge me-2">
                     <i class="bi bi-file-pdf"></i> มีทั้งหมด <?php echo count($issues); ?> ฉบับ
@@ -216,10 +222,10 @@ if (!function_exists('formatFileSize')) {
                                 </div>
                             </div>
                             <div class="col-md-5 text-end">
-                                <a href="?download=<?php echo $issue['id']; ?>" 
+                                <a href="/news_letter2/index.html?id=<?php echo $issue['id']; ?>" 
                                    class="download-btn"
                                    target="_blank">
-                                    <i class="bi bi-file-pdf"></i> ดาวน์โหลด PDF
+                                    <i class="bi bi-eye"></i> ดูจดหมายข่าว
                                 </a>
                                 <div class="mt-2">
                                     <small class="text-muted">

@@ -164,8 +164,8 @@ $userCredits = $credit->getUserCredits($userEmail);
                     <a class="nav-link" href="profile.php">
                         <i class="fas fa-user-cog"></i> ตั้งค่าบัญชี
                     </a>
-                    <a class="nav-link" href="<?php echo BASE_URL; ?>public/download.php" target="_blank">
-                        <i class="fas fa-file-pdf"></i> ดูหนังสือพิมพ์
+                    <a class="nav-link" href="/news_letter2/index.html" target="_blank">
+                        <i class="fas fa-newspaper"></i> ดูจดหมายข่าว
                     </a>
                     
                     <?php if (isAdmin()): ?>

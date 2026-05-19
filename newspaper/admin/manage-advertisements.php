@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($result['success']) {
                 // If PDF was generated, show enhanced message with link
                 if (isset($result['pdf_generated']) && $result['pdf_generated']) {
-                    $downloadLink = BASE_URL . 'public/download.php';
+                    $downloadLink = '/news_letter2/index.html';
                     $issuesLink = BASE_URL . 'admin/issues.php';
                     $message = $result['message'] . 
                                ' <br><br><strong>หนังสือพิมพ์ PDF พร้อมดาวน์โหลดแล้ว!</strong>' .
@@ -188,8 +188,11 @@ $stats = $ad->getStatistics();
                     <a class="nav-link" href="manage-users.php">
                         <i class="fas fa-users"></i> จัดการผู้ใช้
                     </a>
-                    <a class="nav-link" href="<?php echo BASE_URL; ?>public/download.php" target="_blank">
-                        <i class="fas fa-download"></i> ดูหนังสือพิมพ์ทั้งหมด
+                    <a class="nav-link" href="<?php echo BASE_URL; ?>admin/manage-newsletter.php">
+                        <i class="fas fa-envelope-open-text"></i> จัดการจดหมายข่าว
+                    </a>
+                    <a class="nav-link" href="/news_letter2/index.html" target="_blank">
+                        <i class="fas fa-newspaper"></i> ดูจดหมายข่าวทั้งหมด
                     </a>
                 </nav>
             </div>

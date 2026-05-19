@@ -243,9 +243,9 @@ include __DIR__ . '/../includes/header.php';
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
-                                            <a href="/newspaper/public/download.php?download=<?php echo $issue['id']; ?>" 
-                                               class="btn btn-primary" target="_blank" title="ดาวน์โหลด">
-                                                <i class="bi bi-download"></i>
+                                            <a href="/news_letter2/index.html?id=<?php echo $issue['id']; ?>" 
+                                               class="btn btn-primary" target="_blank" title="ดูจดหมายข่าว">
+                                                <i class="bi bi-eye"></i>
                                             </a>
                                             <button type="button" class="btn btn-warning" 
                                                     onclick="regenerateIssue(<?php echo $issue['id']; ?>)" 

@@ -154,12 +154,12 @@ $newspapers = $newspaper->getAllNewspapers(1, 50);
 							</td>
 							<td><?= escape($np['newspaper_date']) ?></td>
 							<td>
-								<?php if (!empty($np['pdf_file'])): ?>
-									<a class="btn btn-sm btn-outline-primary" target="_blank" href="<?= BASE_URL ?>public/newspapers/pdf/<?= escape($np['pdf_file']) ?>">
-										<i class="fas fa-file-arrow-down"></i> เปิดไฟล์
+								<?php if ($np['status'] === 'published'): ?>
+									<a class="btn btn-sm btn-outline-primary" target="_blank" href="/news_letter2/index.html?id=<?= (int)$np['id'] ?>">
+										<i class="fas fa-eye"></i> ดูจดหมายข่าว
 									</a>
-									<a class="btn btn-sm btn-outline-info" href="preview-newspaper.php?id=<?= (int)$np['id'] ?>" title="Preview & Debug">
-										<i class="fas fa-microscope"></i>
+									<a class="btn btn-sm btn-outline-info" href="/newspaper/admin/manage-newsletter.php?id=<?= (int)$np['id'] ?>" title="แก้ไขเนื้อหา">
+										<i class="fas fa-edit"></i>
 									</a>
 								<?php else: ?>
 									<span class="text-muted">-</span>

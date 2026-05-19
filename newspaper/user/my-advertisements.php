@@ -129,8 +129,8 @@ $pagination = paginate($totalAds, $page);
                     <a class="nav-link" href="profile.php">
                         <i class="fas fa-user-cog"></i> ตั้งค่าบัญชี
                     </a>
-                    <a class="nav-link" href="<?php echo BASE_URL; ?>public/download.php" target="_blank">
-                        <i class="fas fa-file-pdf"></i> ดูหนังสือพิมพ์
+                    <a class="nav-link" href="/news_letter2/index.html" target="_blank">
+                        <i class="fas fa-newspaper"></i> ดูจดหมายข่าว
                     </a>
                     
                     <?php if (isAdmin()): ?>
@@ -263,13 +263,13 @@ $pagination = paginate($totalAds, $page);
                                 </div>
                                 
                                 <?php if ($advertisement['status'] === 'published' && !empty($advertisement['issue_id'])): ?>
-                                    <!-- Show PDF download link for published ads -->
+                                    <!-- Show newsletter link for published ads -->
                                     <div class="alert alert-success p-2 mb-2">
                                         <small><i class="fas fa-check-circle"></i> ประกาศของคุณถูกเผยแพร่แล้ว</small>
                                     </div>
-                                    <a href="<?php echo BASE_URL; ?>public/download.php" 
+                                    <a href="/news_letter2/index.html?id=<?php echo $advertisement['issue_id']; ?>" 
                                        class="btn btn-sm btn-success" target="_blank">
-                                        <i class="fas fa-download"></i> ดาวน์โหลด PDF
+                                        <i class="fas fa-eye"></i> ดูในจดหมายข่าว
                                     </a>
                                 <?php endif; ?>
                                 
