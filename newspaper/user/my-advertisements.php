@@ -262,21 +262,30 @@ $pagination = paginate($totalAds, $page);
                                     <?php echo getStatusBadge($advertisement['status']); ?>
                                 </div>
                                 
-                                <?php if ($advertisement['status'] === 'published' && !empty($advertisement['issue_id'])): ?>
-                                    <!-- Show newsletter link for published ads -->
+                                <?php 
+                                // Check if ad is published or assigned to a newspaper
+                                $hasNewspaper = !empty($advertisement['newspaper_id']);
+                                $newspaperPublished = $hasNewspaper && ($advertisement['newspaper_status'] === 'published');
+                                ?>
+                                
+                                <?php if ($newspaperPublished): ?>
+                                    <!-- Show newsletter link for ads in published newspapers -->
                                     <div class="alert alert-success p-2 mb-2">
                                         <small><i class="fas fa-check-circle"></i> ประกาศของคุณถูกเผยแพร่แล้ว</small>
                                     </div>
-                                    <a href="/news_letter2/index.html?id=<?php echo $advertisement['issue_id']; ?>" 
+                                    <a href="/news_letter2/index.html?id=<?php echo $advertisement['newspaper_id']; ?>" 
                                        class="btn btn-sm btn-success" target="_blank">
                                         <i class="fas fa-eye"></i> ดูในจดหมายข่าว
                                     </a>
-                                <?php endif; ?>
-                                
-                                <?php if ($advertisement['status'] === 'approved'): ?>
-                                    <!-- Show message for approved but not yet published -->
+                                <?php elseif ($advertisement['status'] === 'approved' && $hasNewspaper): ?>
+                                    <!-- Approved and assigned but newspaper not yet published -->
                                     <div class="alert alert-info p-2 mb-2">
-                                        <small><i class="fas fa-clock"></i> กำลังรอสร้าง PDF</small>
+                                        <small><i class="fas fa-clock"></i> จัดเข้าฉบับวันที่ <?php echo date('d/m/Y', strtotime($advertisement['newspaper_date'])); ?> แล้ว</small>
+                                    </div>
+                                <?php elseif ($advertisement['status'] === 'approved'): ?>
+                                    <!-- Approved but not yet assigned to any newspaper -->
+                                    <div class="alert alert-info p-2 mb-2">
+                                        <small><i class="fas fa-clock"></i> รอจัดเข้าฉบับหนังสือพิมพ์</small>
                                     </div>
                                 <?php endif; ?>
                                 

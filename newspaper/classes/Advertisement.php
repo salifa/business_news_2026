@@ -181,18 +181,24 @@ class Advertisement {
     public function getUserAdvertisements($userEmail, $status = null, $page = 1) {
         $offset = ($page - 1) * ITEMS_PER_PAGE;
         
-        $whereClause = "WHERE email = :email";
+        $whereClause = "WHERE p.email = :email";
         $params = [':email' => $userEmail];
         
         if ($status) {
-            $whereClause .= " AND status = :status";
+            $whereClause .= " AND p.status = :status";
             $params[':status'] = $status;
         }
         
-        $sql = "SELECT *, COALESCE(pdf_file1, image1) as file_path 
-                FROM placard 
+        $sql = "SELECT p.*, 
+                       COALESCE(p.pdf_file1, p.image1) as file_path,
+                       COALESCE(p.issue_id, na.newspaper_id) as newspaper_id,
+                       n.status as newspaper_status,
+                       n.newspaper_date
+                FROM placard p 
+                LEFT JOIN newspaper_advertisements na ON p.id = na.placard_id
+                LEFT JOIN newspapers n ON COALESCE(p.issue_id, na.newspaper_id) = n.id
                 {$whereClause}
-                ORDER BY created_at DESC
+                ORDER BY p.created_at DESC
                 LIMIT :limit OFFSET :offset";
         
         $this->db->prepare($sql);
